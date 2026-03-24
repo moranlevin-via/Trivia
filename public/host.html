@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host – TriVia</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .host-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; padding: 20px; max-width: 1300px; margin: 0 auto; }
+    @media (max-width: 900px) { .host-layout { grid-template-columns: 1fr; } }
+    .main-area { display: flex; flex-direction: column; gap: 16px; }
+    .side-area { display: flex; flex-direction: column; gap: 16px; }
+    .question-display {
+      background: linear-gradient(135deg, var(--surface), var(--surface2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+    }
+    .q-text { font-size: 1.8rem; font-weight: 800; line-height: 1.3; margin: 16px 0 24px; }
+    .q-meta { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px; }
+    .host-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .host-opt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #fff;
+      position: relative;
+    }
+    .host-opt.opt-a { background: var(--opt-a); }
+    .host-opt.opt-b { background: var(--opt-b); }
+    .host-opt.opt-c { background: var(--opt-c); color: #1a1a1a; }
+    .host-opt.opt-d { background: var(--opt-d); }
+    .host-opt .correct-mark {
+      margin-left: auto;
+      font-size: 1.3rem;
+      display: none;
+    }
+    .host-opt.is-correct .correct-mark { display: block; }
+    .host-opt.is-wrong { opacity: 0.45; }
+    .stat-row { display: flex; gap: 16px; }
+    .stat-box {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-value { font-size: 2rem; font-weight: 900; color: var(--accent); }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .player-chip .kick-btn {
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      font-size: 0.75rem; padding: 0 2px; margin-left: 4px;
+    }
+    .player-chip .kick-btn:hover { color: var(--wrong); }
+    #screen-lobby, #screen-question, #screen-results, #screen-final { display: none; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/admin.html" class="logo" style="text-decoration:none">TriVia</a>
+    <span id="nav-title" class="text-muted" style="font-size:0.9rem">Loading...</span>
+    <button class="btn btn-ghost btn-sm" onclick="endSession()">End Session</button>
+  </nav>
+
+  <div id="screen-lobby" class="page-center" style="display:flex">
+    <div style="width:100%;max-width:640px">
+      <div class="card" style="text-align:center;margin-bottom:16px">
+        <p class="text-muted" style="margin-bottom:8px">Room Code</p>
+        <div id="room-code-display" class="room-code">------</div>
+        <p class="text-muted" style="margin-top:12px;font-size:0.9rem">Players go to <strong style="color:var(--accent)">localhost:3000</strong> and enter this code</p>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3>Players <span id="player-count" class="badge badge-blue">0</span></h3>
+        </div>
+        <div id="lobby-players" class="player-grid">
+          <span class="text-muted" style="font-size:0.9rem">Waiting for players...</span>
+        </div>
+      </div>
+
+      <button id="start-btn" class="btn btn-primary btn-full btn-lg" onclick="startGame()" disabled>
+        Start Game
+      </button>
+      <p class="text-muted" style="text-align:center;margin-top:10px;font-size:0.85rem" id="start-hint">
+        Need at least 1 player to start
+      </p>
+    </div>
+  </div>
+
+  <!-- Question screen -->
+  <div id="screen-question">
+    <div class="host-layout">
+      <div class="main-area">
+        <!-- Timer + question -->
+        <div class="question-display">
+          <div class="timer-bar-wrap"><div id="timer-bar" class="timer-bar" style="width:100%"></div></div>
+          <div class="q-meta" id="q-meta"></div>
+          <div class="q-text" id="q-text"></div>
+          <div class="host-options-grid" id="q-options"></div>
+        </div>
+
+        <!-- Controls -->
+        <div style="display:flex;gap:12px">
+          <button class="btn btn-outline" onclick="endQuestionEarly()" id="skip-btn">End Question Early</button>
+          <div class="stat-box" style="flex:1;padding:12px">
+            <div id="answer-count-display" class="stat-value">0/0</div>
+            <div class="stat-label">Answered</div>
+          </div>
+          <div class="stat-box" style="flex:1;padding:12px">
+            <div id="timer-display" class="stat-value">--</div>
+            <div class="stat-label">Seconds left</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-area">
+        <div class="card" style="padding:20px">
+          <h3 style="margin-bottom:12px">Live Leaderboard</h3>
+          <ul class="leaderboard" id="live-lb"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results screen (between questions) -->
+  <div id="screen-results">
+    <div class="host-layout">
+      <div class="main-area">
+        <div class="card">
+          <h2 id="results-q-text" style="margin-bottom:20px;font-size:1.4rem"></h2>
+          <p class="text-muted" style="margin-bottom:12px">Answer Distribution</p>
+          <div class="bar-chart" id="bar-chart"></div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <button class="btn btn-primary btn-lg" style="flex:1" onclick="nextQuestion()" id="next-btn">
+            Next Question
+          </button>
+          <button class="btn btn-danger" onclick="endSession()">End Game</button>
+        </div>
+      </div>
+      <div class="side-area">
+        <div class="card" style="padding:20px">
+          <h3 style="margin-bottom:12px">Leaderboard</h3>
+          <ul class="leaderboard" id="results-lb"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final screen -->
+  <div id="screen-final" class="page-center" style="display:none">
+    <div style="width:100%;max-width:600px;text-align:center">
+      <div class="card">
+        <h1 style="margin-bottom:8px">Game Over!</h1>
+        <p class="text-muted" style="margin-bottom:28px">Final Leaderboard</p>
+        <ul class="leaderboard" id="final-lb"></ul>
+        <div style="display:flex;gap:12px;margin-top:24px">
+          <a href="/admin.html" class="btn btn-outline" style="flex:1">Back to Admin</a>
+          <button class="btn btn-primary" style="flex:1" onclick="playAgain()">Play Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const quizId = params.get('quizId');
+    if (!quizId) { location.href = '/admin.html'; }
+
+    const socket = io();
+
+    let gameCode = null;
+    let currentQ = null;
+    let timerInterval = null;
+    let timeLeft = 0;
+    let totalPlayers = 0;
+    let answeredCount = 0;
+    let lastLeaderboard = [];
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+
+    socket.on('connect', () => {
+      socket.emit('create-game', { quizId });
+    });
+
+    socket.on('game-created', ({ code, quiz }) => {
+      gameCode = code;
+      document.getElementById('room-code-display').textContent = code;
+      document.getElementById('nav-title').textContent = quiz.title;
+      showScreen('lobby');
+    });
+
+    socket.on('error', msg => toast(msg, 'err'));
+
+    // ── Lobby ─────────────────────────────────────────────────────────────────
+
+    socket.on('players-updated', players => {
+      totalPlayers = players.length;
+      document.getElementById('player-count').textContent = players.length;
+
+      const grid = document.getElementById('lobby-players');
+      if (players.length === 0) {
+        grid.innerHTML = '<span class="text-muted" style="font-size:0.9rem">Waiting for players...</span>';
+      } else {
+        grid.innerHTML = players.map(p => `
+          <div class="player-chip">
+            <span class="avatar">${p.name[0].toUpperCase()}</span>
+            ${esc(p.name)}
+            <button class="kick-btn" onclick="kickPlayer('${p.id}')" title="Kick">✕</button>
+          </div>`).join('');
+      }
+
+      const startBtn = document.getElementById('start-btn');
+      const hint = document.getElementById('start-hint');
+      startBtn.disabled = players.length === 0;
+      hint.style.display = players.length > 0 ? 'none' : '';
+    });
+
+    function kickPlayer(id) {
+      socket.emit('kick-player', { code: gameCode, playerId: id });
+    }
+
+    function startGame() {
+      socket.emit('start-game', { code: gameCode });
+    }
+
+    // ── Question ──────────────────────────────────────────────────────────────
+
+    socket.on('game-started', () => showScreen('question'));
+
+    socket.on('question', q => {
+      currentQ = q;
+      answeredCount = 0;
+      document.getElementById('q-meta').textContent = `Question ${q.index + 1} of ${q.total}`;
+      document.getElementById('q-text').textContent = q.question;
+
+      const optClasses = ['opt-a', 'opt-b', 'opt-c', 'opt-d'];
+      const optIcons = ['▲', '◆', '●', '■'];
+      document.getElementById('q-options').innerHTML = q.options.map((opt, i) => `
+        <div class="host-opt ${optClasses[i]}" id="hostopt-${i}">
+          <span style="font-size:1.1rem">${optIcons[i]}</span>
+          ${esc(opt)}
+          <span class="correct-mark">✓</span>
+        </div>`).join('');
+
+      updateAnswerCount(0, totalPlayers);
+      showScreen('question');
+      startTimer(q.timeLimit);
+    });
+
+    socket.on('answer-count', ({ count, total }) => {
+      totalPlayers = total;
+      answeredCount = count;
+      updateAnswerCount(count, total);
+      renderLeaderboard('live-lb', lastLeaderboard);
+    });
+
+    function updateAnswerCount(count, total) {
+      document.getElementById('answer-count-display').textContent = `${count}/${total}`;
+    }
+
+    function endQuestionEarly() {
+      socket.emit('end-question', { code: gameCode });
+    }
+
+    // ── Timer ─────────────────────────────────────────────────────────────────
+
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      timeLeft = seconds;
+      const bar = document.getElementById('timer-bar');
+      const num = document.getElementById('timer-display');
+      bar.style.transition = 'none';
+      bar.style.width = '100%';
+
+      setTimeout(() => {
+        bar.style.transition = `width ${seconds}s linear`;
+        bar.style.width = '0%';
+      }, 50);
+
+      num.textContent = seconds;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        num.textContent = Math.max(0, timeLeft);
+        if (timeLeft <= 5) num.style.color = 'var(--wrong)';
+        else num.style.color = 'var(--accent)';
+        if (timeLeft <= 0) clearInterval(timerInterval);
+      }, 1000);
+    }
+
+    // ── Results ───────────────────────────────────────────────────────────────
+
+    socket.on('question-ended', ({ correctAnswer, answerCounts, leaderboard }) => {
+      clearInterval(timerInterval);
+      lastLeaderboard = leaderboard;
+
+      // Reveal correct answer on question screen briefly
+      currentQ.options.forEach((_, i) => {
+        const el = document.getElementById(`hostopt-${i}`);
+        if (!el) return;
+        if (i === correctAnswer) el.classList.add('is-correct');
+        else el.classList.add('is-wrong');
+      });
+
+      // Build results after 1.5s
+      setTimeout(() => {
+        renderResults(correctAnswer, answerCounts, leaderboard);
+        showScreen('results');
+      }, 1500);
+    });
+
+    function renderResults(correctAnswer, answerCounts, leaderboard) {
+      document.getElementById('results-q-text').textContent = currentQ?.question || '';
+
+      const optLabels = ['A', 'B', 'C', 'D'];
+      const maxCount = Math.max(...answerCounts, 1);
+      const chart = document.getElementById('bar-chart');
+      chart.innerHTML = answerCounts.map((c, i) => {
+        const pct = Math.round((c / maxCount) * 100);
+        const isCorrect = i === correctAnswer;
+        return `
+          <div class="bar-col">
+            <span class="bar-count">${c}</span>
+            <div class="bar-fill" style="height:${pct}%;${isCorrect ? 'box-shadow:0 0 12px rgba(34,197,94,0.5)' : ''}"></div>
+            <span class="bar-label">${optLabels[i]}${isCorrect ? ' ✓' : ''}</span>
+          </div>`;
+      }).join('');
+
+      renderLeaderboard('results-lb', leaderboard);
+
+      const isLast = currentQ && (currentQ.index + 1 >= currentQ.total);
+      document.getElementById('next-btn').textContent = isLast ? 'Show Final Results' : 'Next Question';
+    }
+
+    function renderLeaderboard(elId, players) {
+      const medals = ['1st', '2nd', '3rd', '4th', '5th'];
+      document.getElementById(elId).innerHTML = players.length === 0
+        ? '<li style="color:var(--text-muted);font-size:0.9rem">No scores yet</li>'
+        : players.map((p, i) => `
+          <li>
+            <span class="rank">${medals[i] || (i+1)}</span>
+            <span class="lb-name">${esc(p.name)}</span>
+            <span class="lb-score">${p.score.toLocaleString()}</span>
+          </li>`).join('');
+    }
+
+    function nextQuestion() {
+      socket.emit('next-question', { code: gameCode });
+    }
+
+    socket.on('game-ended', ({ leaderboard }) => {
+      clearInterval(timerInterval);
+      renderLeaderboard('final-lb', leaderboard);
+      showScreen('final');
+    });
+
+    // ── Util ──────────────────────────────────────────────────────────────────
+
+    function showScreen(name) {
+      ['lobby', 'question', 'results', 'final'].forEach(s => {
+        const el = document.getElementById(`screen-${s}`);
+        if (!el) return;
+        const flexScreens = ['lobby', 'final'];
+        el.style.display = s === name ? (flexScreens.includes(s) ? 'flex' : 'block') : 'none';
+      });
+    }
+
+    function endSession() {
+      if (confirm('End this game session?')) location.href = '/admin.html';
+    }
+
+    function playAgain() {
+      location.href = `/host.html?quizId=${quizId}`;
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function toast(msg, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (type === 'err' ? ' toast-err' : '');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>

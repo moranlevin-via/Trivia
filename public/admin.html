@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – TriVia</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; padding: 24px; max-width: 1300px; margin: 0 auto; }
+    @media (max-width: 900px) { .page-layout { grid-template-columns: 1fr; } }
+    .sidebar { position: sticky; top: 72px; height: fit-content; }
+    .panel-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+    .correct-radio { display: flex; gap: 8px; margin-top: 8px; }
+    .correct-radio label {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px; border: 1.5px solid var(--border); border-radius: 8px;
+      cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.15s;
+      text-transform: none; letter-spacing: 0; color: var(--text); margin: 0;
+    }
+    .correct-radio input { display: none; }
+    .correct-radio input:checked + label { border-color: var(--correct); background: #14532d; color: #86efac; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .dot.a { background: var(--opt-a); }
+    .dot.b { background: var(--opt-b); }
+    .dot.c { background: var(--opt-c); }
+    .dot.d { background: var(--opt-d); }
+    .time-select { display: flex; gap: 8px; }
+    .time-btn {
+      flex: 1; padding: 8px; border: 1.5px solid var(--border); border-radius: 8px;
+      background: transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .time-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+    #editor-section { display: none; }
+    #editor-section.visible { display: block; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo" style="text-decoration:none">TriVia</a>
+    <span class="text-muted" style="font-size:0.9rem">Admin Panel</span>
+    <a href="/" class="btn btn-ghost btn-sm">Back to Home</a>
+  </nav>
+
+  <div class="page-layout">
+
+    <!-- Left: Quiz list -->
+    <aside class="sidebar">
+      <div class="card" style="padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="panel-title" style="margin:0">My Quizzes</div>
+          <button class="btn btn-primary btn-sm" onclick="newQuiz()">+ New</button>
+        </div>
+        <div id="quiz-list">
+          <div class="empty-state">
+            <div class="icon">📋</div>
+            <p>No quizzes yet</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right: Editor -->
+    <main>
+      <div id="editor-section">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+            <h2 id="editor-title">New Quiz</h2>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-danger btn-sm" id="delete-btn" onclick="deleteQuiz()" style="display:none">Delete</button>
+              <button class="btn btn-primary btn-sm" onclick="saveQuiz()">Save Quiz</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Quiz Title</label>
+            <input id="quiz-title" class="input" type="text" placeholder="e.g. General Knowledge">
+          </div>
+
+          <hr class="divider">
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <h3>Questions <span id="q-count" class="badge badge-blue">0</span></h3>
+            <button class="btn btn-outline btn-sm" onclick="addQuestion()">+ Add Question</button>
+          </div>
+
+          <div id="questions-container"></div>
+
+          <div class="empty-state hidden" id="no-questions">
+            <div class="icon">❓</div>
+            <p>Add your first question</p>
+            <button class="btn btn-primary" style="margin-top:16px" onclick="addQuestion()">Add Question</button>
+          </div>
+        </div>
+
+        <!-- Host this quiz -->
+        <div class="card" style="margin-top:16px" id="host-panel" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <h3>Ready to play?</h3>
+              <p class="text-muted" style="margin-top:4px">Start a live game session</p>
+            </div>
+            <button class="btn btn-primary btn-lg" id="host-btn" onclick="hostGame()">Host Game</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placeholder -->
+      <div id="no-editor" class="empty-state">
+        <div class="icon">✏️</div>
+        <p>Select a quiz or create a new one</p>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let quizzes = [];
+    let currentQuizId = null;
+    let questions = []; // local copy while editing
+
+    // ── Load quizzes ──────────────────────────────────────────────────────────
+
+    async function loadQuizzes() {
+      const res = await fetch('/api/quizzes');
+      quizzes = await res.json();
+      renderQuizList();
+    }
+
+    function renderQuizList() {
+      const el = document.getElementById('quiz-list');
+      if (quizzes.length === 0) {
+        el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No quizzes yet</p></div>';
+        return;
+      }
+      el.innerHTML = quizzes.map(q => `
+        <div class="quiz-item" id="qi-${q.id}" onclick="selectQuiz('${q.id}')" style="cursor:pointer;margin-bottom:8px;border-radius:10px;transition:border-color 0.15s" data-id="${q.id}">
+          <div class="quiz-info">
+            <div class="quiz-title">${esc(q.title)}</div>
+            <div class="quiz-meta">${(q.questions || []).length} questions</div>
+          </div>
+          <span style="color:var(--text-muted);font-size:1.2rem">›</span>
+        </div>
+      `).join('');
+    }
+
+    // ── Select quiz ───────────────────────────────────────────────────────────
+
+    function selectQuiz(id) {
+      const quiz = quizzes.find(q => q.id === id);
+      if (!quiz) return;
+      currentQuizId = id;
+      questions = JSON.parse(JSON.stringify(quiz.questions || []));
+
+      document.getElementById('editor-title').textContent = 'Edit Quiz';
+      document.getElementById('quiz-title').value = quiz.title || '';
+      document.getElementById('delete-btn').style.display = '';
+      document.getElementById('host-panel').style.display = '';
+
+      // Highlight selected
+      document.querySelectorAll('.quiz-item').forEach(el => {
+        el.style.borderColor = el.dataset.id === id ? 'var(--primary)' : 'var(--border)';
+        el.style.background = el.dataset.id === id ? 'var(--surface2)' : '';
+      });
+
+      showEditor();
+      renderQuestions();
+    }
+
+    // ── New quiz ──────────────────────────────────────────────────────────────
+
+    function newQuiz() {
+      currentQuizId = null;
+      questions = [];
+      document.getElementById('editor-title').textContent = 'New Quiz';
+      document.getElementById('quiz-title').value = '';
+      document.getElementById('delete-btn').style.display = 'none';
+      document.getElementById('host-panel').style.display = 'none';
+      document.querySelectorAll('.quiz-item').forEach(el => { el.style.borderColor = ''; el.style.background = ''; });
+      showEditor();
+      renderQuestions();
+      addQuestion();
+      document.getElementById('quiz-title').focus();
+    }
+
+    function showEditor() {
+      document.getElementById('editor-section').classList.add('visible');
+      document.getElementById('no-editor').style.display = 'none';
+    }
+
+    // ── Render questions ──────────────────────────────────────────────────────
+
+    function renderQuestions() {
+      const container = document.getElementById('questions-container');
+      const noQ = document.getElementById('no-questions');
+      document.getElementById('q-count').textContent = questions.length;
+
+      if (questions.length === 0) {
+        container.innerHTML = '';
+        noQ.classList.remove('hidden');
+        return;
+      }
+      noQ.classList.add('hidden');
+
+      container.innerHTML = questions.map((q, i) => renderQuestionBlock(q, i)).join('');
+    }
+
+    function renderQuestionBlock(q, i) {
+      const opts = ['A', 'B', 'C', 'D'];
+      const colors = ['a', 'b', 'c', 'd'];
+      const times = [10, 20, 30, 60];
+
+      return `
+      <div class="question-block fade-in" id="qblock-${i}">
+        <div class="q-header">
+          <span class="q-number">Question ${i + 1}</span>
+          <button class="btn btn-ghost btn-sm" onclick="removeQuestion(${i})" title="Remove">✕ Remove</button>
+        </div>
+        <div class="field">
+          <label>Question Text</label>
+          <textarea class="textarea" rows="2" placeholder="Enter your question..."
+            onchange="updateQ(${i}, 'question', this.value)">${esc(q.question || '')}</textarea>
+        </div>
+        <div class="options-grid">
+          ${opts.map((opt, j) => `
+            <div class="option-input-wrap">
+              <span class="opt-dot ${colors[j]}"></span>
+              <input class="input" type="text" placeholder="Option ${opt}"
+                value="${esc((q.options || [])[j] || '')}"
+                onchange="updateOption(${i}, ${j}, this.value)">
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top:14px">
+          <label>Correct Answer</label>
+          <div class="correct-radio">
+            ${opts.map((opt, j) => `
+              <div>
+                <input type="radio" name="correct-${i}" id="cr-${i}-${j}" value="${j}"
+                  ${(q.correctAnswer === j) ? 'checked' : ''}
+                  onchange="updateQ(${i}, 'correctAnswer', ${j})">
+                <label for="cr-${i}-${j}"><span class="dot ${colors[j]}"></span>${opt}</label>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <label>Time Limit (seconds)</label>
+          <div class="time-select">
+            ${times.map(t => `
+              <button class="time-btn ${(q.timeLimit || 20) === t ? 'active' : ''}"
+                onclick="setTime(${i}, ${t}, this)">${t}s</button>
+            `).join('')}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    // ── Question mutations ────────────────────────────────────────────────────
+
+    function addQuestion() {
+      questions.push({
+        question: '',
+        options: ['', '', '', ''],
+        correctAnswer: 0,
+        timeLimit: 20,
+      });
+      renderQuestions();
+      // Scroll to new question
+      setTimeout(() => {
+        const blocks = document.querySelectorAll('.question-block');
+        blocks[blocks.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
+
+    function removeQuestion(i) {
+      questions.splice(i, 1);
+      renderQuestions();
+    }
+
+    function updateQ(i, field, value) {
+      questions[i][field] = value;
+    }
+
+    function updateOption(i, j, value) {
+      if (!questions[i].options) questions[i].options = ['', '', '', ''];
+      questions[i].options[j] = value;
+    }
+
+    function setTime(i, t, btn) {
+      questions[i].timeLimit = t;
+      const wrap = btn.closest('.time-select');
+      wrap.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // ── Save ──────────────────────────────────────────────────────────────────
+
+    async function saveQuiz() {
+      const title = document.getElementById('quiz-title').value.trim();
+      if (!title) return toast('Enter a quiz title', 'err');
+      if (questions.length === 0) return toast('Add at least one question', 'err');
+
+      // Gather latest values from DOM (textarea/input may not have fired change)
+      document.querySelectorAll('.question-block').forEach((block, i) => {
+        const ta = block.querySelector('textarea');
+        if (ta) questions[i].question = ta.value;
+        block.querySelectorAll('.option-input-wrap input').forEach((inp, j) => {
+          if (!questions[i].options) questions[i].options = ['','','',''];
+          questions[i].options[j] = inp.value;
+        });
+      });
+
+      const payload = { title, questions };
+
+      try {
+        if (currentQuizId) {
+          const res = await fetch(`/api/quizzes/${currentQuizId}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+          });
+          const updated = await res.json();
+          const idx = quizzes.findIndex(q => q.id === currentQuizId);
+          if (idx !== -1) quizzes[idx] = updated;
+          toast('Saved!', 'ok');
+        } else {
+          const res = await fetch('/api/quizzes', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+          });
+          const created = await res.json();
+          quizzes.push(created);
+          currentQuizId = created.id;
+          document.getElementById('editor-title').textContent = 'Edit Quiz';
+          document.getElementById('delete-btn').style.display = '';
+          document.getElementById('host-panel').style.display = '';
+          toast('Quiz created!', 'ok');
+        }
+        renderQuizList();
+        // Re-highlight
+        setTimeout(() => selectQuizHighlight(currentQuizId), 50);
+      } catch (e) {
+        toast('Save failed', 'err');
+      }
+    }
+
+    function selectQuizHighlight(id) {
+      document.querySelectorAll('.quiz-item').forEach(el => {
+        el.style.borderColor = el.dataset.id === id ? 'var(--primary)' : 'var(--border)';
+        el.style.background = el.dataset.id === id ? 'var(--surface2)' : '';
+      });
+    }
+
+    async function deleteQuiz() {
+      if (!currentQuizId) return;
+      if (!confirm('Delete this quiz?')) return;
+      await fetch(`/api/quizzes/${currentQuizId}`, { method: 'DELETE' });
+      quizzes = quizzes.filter(q => q.id !== currentQuizId);
+      currentQuizId = null;
+      renderQuizList();
+      document.getElementById('editor-section').classList.remove('visible');
+      document.getElementById('no-editor').style.display = '';
+      toast('Deleted', 'ok');
+    }
+
+    // ── Host ──────────────────────────────────────────────────────────────────
+
+    function hostGame() {
+      if (!currentQuizId) return;
+      location.href = `/host.html?quizId=${currentQuizId}`;
+    }
+
+    // ── Util ──────────────────────────────────────────────────────────────────
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function toast(msg, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (type === 'err' ? ' toast-err' : type === 'ok' ? ' toast-ok' : '');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    loadQuizzes();
+  </script>
+</body>
+</html>

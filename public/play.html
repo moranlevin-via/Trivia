@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Play – TriVia</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .play-wrap { max-width: 640px; margin: 0 auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; gap: 16px; }
+    .question-card {
+      background: linear-gradient(135deg, var(--surface), var(--surface2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .q-display { font-size: 1.5rem; font-weight: 800; line-height: 1.35; margin: 16px 0 8px; }
+    .answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .answer-grid { grid-template-columns: 1fr; } }
+    .spinner {
+      width: 48px; height: 48px; border: 4px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 16px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .points-pop {
+      font-size: 3rem; font-weight: 900;
+      animation: popIn 0.4s ease;
+      color: var(--accent2);
+    }
+    .name-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 16px; font-weight: 600; font-size: 0.9rem;
+    }
+    #screen-join, #screen-wait, #screen-lobby, #screen-question,
+    #screen-answered, #screen-results, #screen-final { display: none; }
+  </style>
+</head>
+<body>
+  <!-- JOIN form -->
+  <div id="screen-join" class="page-center" style="display:flex">
+    <div class="card card-sm">
+      <div style="text-align:center;margin-bottom:24px">
+        <span class="logo">TriVia</span>
+      </div>
+      <div class="field">
+        <label>Your Name</label>
+        <input id="join-name" class="input" type="text" placeholder="Enter your name" maxlength="20">
+      </div>
+      <div class="field">
+        <label>Room Code</label>
+        <input id="join-code" class="input" type="text" placeholder="e.g. AB12C" maxlength="5"
+               style="text-transform:uppercase;letter-spacing:0.15em;font-size:1.3rem;font-weight:800;text-align:center">
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="joinGame()">Join Game</button>
+    </div>
+  </div>
+
+  <!-- Waiting to connect -->
+  <div id="screen-wait" class="page-center">
+    <div class="card card-sm" style="text-align:center">
+      <div class="spinner"></div>
+      <p>Connecting...</p>
+    </div>
+  </div>
+
+  <!-- Lobby -->
+  <div id="screen-lobby" class="page-center">
+    <div class="card card-sm" style="text-align:center">
+      <span class="logo" style="font-size:2rem">TriVia</span>
+      <div style="margin:20px 0">
+        <div class="name-badge"><span class="avatar" style="width:32px;height:32px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:800" id="lb-avatar">?</span><span id="lb-name"></span></div>
+      </div>
+      <p class="text-muted" style="margin-bottom:8px">You're in!</p>
+      <p id="quiz-title-display" style="font-weight:700;font-size:1.1rem;color:var(--accent2);margin-bottom:16px"></p>
+      <div class="spinner"></div>
+      <p class="text-muted" style="font-size:0.9rem">Waiting for host to start...</p>
+      <div style="margin-top:16px">
+        <p id="lobby-player-count" class="text-muted" style="font-size:0.85rem"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <div id="screen-question">
+    <div class="play-wrap">
+      <div class="question-card">
+        <div class="timer-bar-wrap"><div id="p-timer-bar" class="timer-bar" style="width:100%"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+          <span id="p-q-meta" class="text-muted" style="font-size:0.85rem"></span>
+          <span id="p-timer-num" class="text-accent" style="font-size:1.5rem;font-weight:900">--</span>
+        </div>
+        <div id="p-q-text" class="q-display"></div>
+      </div>
+      <div id="p-options" class="answer-grid"></div>
+    </div>
+  </div>
+
+  <!-- Answered: waiting for results -->
+  <div id="screen-answered" class="page-center">
+    <div class="card card-sm" style="text-align:center">
+      <div class="spinner"></div>
+      <p style="font-size:1.1rem;font-weight:700;margin-top:8px">Answer submitted!</p>
+      <p class="text-muted">Waiting for others...</p>
+    </div>
+  </div>
+
+  <!-- Per-question result -->
+  <div id="screen-results" class="page-center">
+    <div style="width:100%;max-width:520px">
+      <div id="result-banner" class="result-banner fade-in" style="margin-bottom:16px"></div>
+      <div class="card" style="text-align:center">
+        <p class="text-muted" style="margin-bottom:4px">Your score</p>
+        <div class="points-pop" id="result-score"></div>
+        <hr class="divider">
+        <h3 style="margin-bottom:12px">Top Players</h3>
+        <ul class="leaderboard" id="result-lb"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final -->
+  <div id="screen-final" class="page-center">
+    <div style="width:100%;max-width:520px;text-align:center">
+      <div class="card">
+        <h1 style="margin-bottom:4px">Game Over!</h1>
+        <p class="text-muted" style="margin-bottom:20px">Final Results</p>
+        <div id="my-final-rank" style="font-size:2.5rem;font-weight:900;color:var(--accent2);margin-bottom:8px"></div>
+        <div id="my-final-score" class="text-muted" style="margin-bottom:24px"></div>
+        <ul class="leaderboard" id="final-lb"></ul>
+        <a href="/" class="btn btn-primary btn-full" style="margin-top:20px">Play Again</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(location.search);
+    let playerName = urlParams.get('name') || sessionStorage.getItem('playerName') || '';
+    let gameCode = (urlParams.get('code') || '').toUpperCase();
+    let myScore = 0;
+    let timerInterval = null;
+    let timeLeft = 0;
+    let answered = false;
+    let socket = null;
+
+    // ── Auto-join if params provided ──────────────────────────────────────────
+
+    if (playerName && gameCode) {
+      showScreen('wait');
+      initSocket();
+    } else {
+      showScreen('join');
+      if (gameCode) document.getElementById('join-code').value = gameCode;
+      if (playerName) document.getElementById('join-name').value = playerName;
+    }
+
+    document.getElementById('join-code').addEventListener('input', e => {
+      e.target.value = e.target.value.toUpperCase();
+    });
+    ['join-name', 'join-code'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') joinGame(); });
+    });
+
+    function joinGame() {
+      playerName = document.getElementById('join-name').value.trim();
+      gameCode = document.getElementById('join-code').value.trim().toUpperCase();
+      if (!playerName) return toast('Enter your name', 'err');
+      if (!gameCode || gameCode.length < 4) return toast('Enter the room code', 'err');
+      showScreen('wait');
+      initSocket();
+    }
+
+    function initSocket() {
+      socket = io();
+
+      socket.on('connect', () => {
+        socket.emit('join-game', { code: gameCode, name: playerName });
+      });
+
+      socket.on('join-error', msg => {
+        toast(msg, 'err');
+        showScreen('join');
+      });
+
+      socket.on('joined-game', ({ quizTitle }) => {
+        document.getElementById('lb-name').textContent = playerName;
+        document.getElementById('lb-avatar').textContent = playerName[0].toUpperCase();
+        document.getElementById('quiz-title-display').textContent = quizTitle;
+        showScreen('lobby');
+      });
+
+      socket.on('players-updated', players => {
+        document.getElementById('lobby-player-count').textContent =
+          `${players.length} player${players.length !== 1 ? 's' : ''} in the room`;
+      });
+
+      socket.on('game-started', () => {
+        // question event will follow immediately
+      });
+
+      socket.on('question', q => {
+        answered = false;
+        myScore = myScore; // unchanged
+        renderQuestion(q);
+        showScreen('question');
+        startTimer(q.timeLimit, q);
+      });
+
+      socket.on('answer-result', ({ isCorrect, points }) => {
+        myScore += points;
+        clearInterval(timerInterval);
+        showScreen('answered');
+      });
+
+      socket.on('question-ended', ({ correctAnswer, leaderboard }) => {
+        clearInterval(timerInterval);
+
+        const banner = document.getElementById('result-banner');
+        if (answered) {
+          // already got answer-result
+        }
+        // We can check from DOM if they answered
+        const wasCorrect = answered && document.getElementById(`popt-${correctAnswer}`) &&
+                           document.querySelector('.selected-opt')?.id === `popt-${correctAnswer}`;
+
+        // Show result screen
+        renderQuestionResults(correctAnswer, leaderboard);
+        showScreen('results');
+      });
+
+      socket.on('game-ended', ({ leaderboard }) => {
+        clearInterval(timerInterval);
+        const myRank = leaderboard.findIndex(p => p.name === playerName) + 1;
+        const medals = ['1st', '2nd', '3rd'];
+        document.getElementById('my-final-rank').textContent =
+          myRank > 0 ? (medals[myRank - 1] || `${myRank}th`) + ' Place' : 'Finished!';
+        document.getElementById('my-final-score').textContent =
+          `Total: ${myScore.toLocaleString()} pts`;
+        renderLeaderboard('final-lb', leaderboard);
+        showScreen('final');
+      });
+
+      socket.on('host-disconnected', () => {
+        toast('Host disconnected', 'err');
+        setTimeout(() => location.href = '/', 2000);
+      });
+
+      socket.on('kicked', () => {
+        toast('You were removed from the game', 'err');
+        setTimeout(() => location.href = '/', 2000);
+      });
+    }
+
+    // ── Question rendering ────────────────────────────────────────────────────
+
+    const OPT_CLASSES = ['opt-a', 'opt-b', 'opt-c', 'opt-d'];
+    const OPT_ICONS   = ['▲', '◆', '●', '■'];
+    const OPT_LABELS  = ['A', 'B', 'C', 'D'];
+
+    function renderQuestion(q) {
+      document.getElementById('p-q-meta').textContent = `Question ${q.index + 1} / ${q.total}`;
+      document.getElementById('p-q-text').textContent = q.question;
+
+      document.getElementById('p-options').innerHTML = q.options.map((opt, i) => `
+        <button class="option-btn ${OPT_CLASSES[i]}" id="popt-${i}" onclick="submitAnswer(${i}, '${q.timeLimit}')">
+          <span class="opt-icon">${OPT_ICONS[i]}</span>
+          ${esc(opt)}
+        </button>`).join('');
+    }
+
+    function submitAnswer(index, timeLimit) {
+      if (answered) return;
+      answered = true;
+
+      // Visual feedback
+      document.querySelectorAll('.option-btn').forEach((btn, i) => {
+        btn.disabled = true;
+        btn.style.opacity = i === index ? '1' : '0.4';
+        if (i === index) btn.classList.add('selected-opt');
+      });
+
+      socket.emit('submit-answer', {
+        code: gameCode,
+        answerIndex: index,
+        timeLeft: Math.max(0, timeLeft),
+      });
+
+      // Short flash then switch to "waiting" screen
+      setTimeout(() => showScreen('answered'), 600);
+    }
+
+    // ── Timer ─────────────────────────────────────────────────────────────────
+
+    function startTimer(seconds, q) {
+      clearInterval(timerInterval);
+      timeLeft = seconds;
+
+      const bar = document.getElementById('p-timer-bar');
+      const num = document.getElementById('p-timer-num');
+      bar.style.transition = 'none';
+      bar.style.width = '100%';
+      setTimeout(() => {
+        bar.style.transition = `width ${seconds}s linear`;
+        bar.style.width = '0%';
+      }, 50);
+
+      num.textContent = seconds;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        num.textContent = Math.max(0, timeLeft);
+        if (timeLeft <= 5) num.style.color = 'var(--wrong)';
+        else num.style.color = 'var(--accent)';
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          if (!answered) {
+            answered = true;
+            document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+            showScreen('answered');
+          }
+        }
+      }, 1000);
+    }
+
+    // ── Results ───────────────────────────────────────────────────────────────
+
+    function renderQuestionResults(correctAnswer, leaderboard) {
+      // Determine if player got it right — check against submitted answer
+      // Since we showed "answered" screen, we stored answered=true and the index in DOM
+      // Find selected
+      const selected = document.querySelector('.selected-opt');
+      const selectedIdx = selected ? parseInt(selected.id.replace('popt-', '')) : -1;
+      const isCorrect = selectedIdx === correctAnswer;
+
+      const banner = document.getElementById('result-banner');
+      if (selectedIdx === -1) {
+        banner.className = 'result-banner wrong fade-in';
+        banner.innerHTML = '<div style="font-size:2rem">⏱️</div><div>Time\'s up!</div>';
+      } else if (isCorrect) {
+        banner.className = 'result-banner correct fade-in';
+        banner.innerHTML = `<div style="font-size:2rem">✓</div><div>Correct!</div>`;
+      } else {
+        banner.className = 'result-banner wrong fade-in';
+        banner.innerHTML = `<div style="font-size:2rem">✕</div><div>Wrong!</div>`;
+      }
+
+      document.getElementById('result-score').textContent = myScore.toLocaleString() + ' pts';
+      renderLeaderboard('result-lb', leaderboard);
+    }
+
+    function renderLeaderboard(elId, players) {
+      const medals = ['1st', '2nd', '3rd', '4th', '5th'];
+      document.getElementById(elId).innerHTML = players.map((p, i) => `
+        <li${p.name === playerName ? ' style="border:1.5px solid var(--primary)"' : ''}>
+          <span class="rank">${medals[i] || (i+1)}</span>
+          <span class="lb-name">${esc(p.name)}${p.name === playerName ? ' <span class="badge badge-blue" style="font-size:0.65rem">you</span>' : ''}</span>
+          <span class="lb-score">${p.score.toLocaleString()}</span>
+        </li>`).join('');
+    }
+
+    // ── Util ──────────────────────────────────────────────────────────────────
+
+    function showScreen(name) {
+      const names = ['join', 'wait', 'lobby', 'question', 'answered', 'results', 'final'];
+      names.forEach(s => {
+        const el = document.getElementById(`screen-${s}`);
+        if (el) el.style.display = s === name
+          ? (['join','wait','lobby','answered','results','final'].includes(s) ? 'flex' : 'block')
+          : 'none';
+      });
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function toast(msg, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (type === 'err' ? ' toast-err' : '');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+  </script>
+</body>
+</html>

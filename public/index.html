@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TriVia</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { direction: ltr; }
+    .hero { text-align: center; margin-bottom: 32px; }
+    .hero .logo { display: block; margin-bottom: 8px; }
+    .tabs { display: flex; gap: 0; margin-bottom: 28px; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .tab-btn {
+      flex: 1; padding: 12px; border: none; background: transparent;
+      color: var(--text-muted); font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .tab-btn.active { background: var(--primary); color: #fff; }
+    .tab-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
+    .divider-or {
+      text-align: center; position: relative; margin: 20px 0; color: var(--text-muted); font-size: 0.85rem;
+    }
+    .divider-or::before, .divider-or::after {
+      content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--border);
+    }
+    .divider-or::before { left: 0; }
+    .divider-or::after { right: 0; }
+  </style>
+</head>
+<body>
+  <div class="page-center">
+    <div class="card card-sm">
+      <div class="hero">
+        <span class="logo">TriVia</span>
+        <p class="text-muted">Your personal quiz platform</p>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('join')">Join Game</button>
+        <button class="tab-btn" onclick="switchTab('host')">Host / Admin</button>
+      </div>
+
+      <!-- JOIN -->
+      <div id="tab-join" class="tab-panel active">
+        <div class="field">
+          <label>Your Name</label>
+          <input id="player-name" class="input" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Room Code</label>
+          <input id="room-code" class="input" type="text" placeholder="e.g. AB12C" maxlength="5"
+                 style="text-transform:uppercase;letter-spacing:0.15em;font-size:1.3rem;font-weight:800;text-align:center">
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" onclick="joinGame()">Join</button>
+      </div>
+
+      <!-- HOST / ADMIN -->
+      <div id="tab-host" class="tab-panel">
+        <p class="text-muted" style="margin-bottom:20px">Manage your quizzes and host live games.</p>
+        <a href="/admin.html" class="btn btn-primary btn-full btn-lg">Go to Admin Panel</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const nameInput = document.getElementById('player-name');
+    const codeInput = document.getElementById('room-code');
+
+    // Auto-uppercase room code
+    codeInput.addEventListener('input', () => {
+      codeInput.value = codeInput.value.toUpperCase();
+    });
+
+    // Enter key support
+    [nameInput, codeInput].forEach(el => {
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') joinGame(); });
+    });
+
+    // Check for pre-filled code in URL
+    const params = new URLSearchParams(location.search);
+    if (params.get('code')) codeInput.value = params.get('code').toUpperCase();
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', (i === 0 && tab === 'join') || (i === 1 && tab === 'host'));
+      });
+      document.getElementById('tab-join').classList.toggle('active', tab === 'join');
+      document.getElementById('tab-host').classList.toggle('active', tab === 'host');
+    }
+
+    function joinGame() {
+      const name = nameInput.value.trim();
+      const code = codeInput.value.trim().toUpperCase();
+      if (!name) return toast('Enter your name', 'err');
+      if (!code || code.length < 4) return toast('Enter a valid room code', 'err');
+      sessionStorage.setItem('playerName', name);
+      location.href = `/play.html?code=${code}&name=${encodeURIComponent(name)}`;
+    }
+
+    function toast(msg, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (type === 'err' ? ' toast-err' : '');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+  </script>
+</body>
+</html>
