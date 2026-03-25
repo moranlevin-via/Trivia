@@ -221,14 +221,14 @@
         </div>
         <div class="field">
           <label>Question Text</label>
-          <textarea class="textarea" rows="2" placeholder="Enter your question..."
+          <textarea class="textarea" rows="2" placeholder="Enter your question..." dir="rtl"
             onchange="updateQ(${i}, 'question', this.value)">${esc(q.question || '')}</textarea>
         </div>
         <div class="options-grid">
           ${opts.map((opt, j) => `
             <div class="option-input-wrap">
               <span class="opt-dot ${colors[j]}"></span>
-              <input class="input" type="text" placeholder="Option ${opt}"
+              <input class="input" type="text" placeholder="Option ${opt}" dir="rtl"
                 value="${esc((q.options || [])[j] || '')}"
                 onchange="updateOption(${i}, ${j}, this.value)">
             </div>

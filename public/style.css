@@ -452,6 +452,9 @@ label {
 
 .fade-in { animation: fadeIn 0.3s ease forwards; }
 
+/* ── RTL support for Hebrew text ── */
+.q-display, .q-text, .option-btn, .host-opt { direction: rtl; }
+
 /* ── States: hidden ── */
 .hidden { display: none !important; }
 
