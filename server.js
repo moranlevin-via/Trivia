@@ -15,13 +15,17 @@ app.use(express.static('public'));
 
 const DATA_FILE = path.join(__dirname, 'data', 'quizzes.json');
 
+let quizzesCache = null;
+
 function loadQuizzes() {
-  if (!fs.existsSync(DATA_FILE)) return [];
-  try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-  catch { return []; }
+  if (quizzesCache) return quizzesCache;
+  if (!fs.existsSync(DATA_FILE)) return (quizzesCache = []);
+  try { return (quizzesCache = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'))); }
+  catch { return (quizzesCache = []); }
 }
 
 function saveQuizzes(quizzes) {
+  quizzesCache = quizzes;
   fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
   fs.writeFileSync(DATA_FILE, JSON.stringify(quizzes, null, 2));
 }
