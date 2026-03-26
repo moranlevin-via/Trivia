@@ -218,8 +218,8 @@ io.on('connection', (socket) => {
 
     const q = game.quiz.questions[qIdx];
     const isCorrect = answerIndex === q.correctAnswer;
-    const speedBonus = isCorrect ? Math.round(Math.max(0, timeLeft) * 10) : 0;
-    const points = isCorrect ? (1000 + speedBonus) : 0;
+    const speedBonus = isCorrect ? Math.round(Math.max(0, timeLeft) * 50) : 0;
+    const points = isCorrect ? (500 + speedBonus) : 0;
 
     game.answers[qIdx][socket.id] = { answerIndex, isCorrect, points };
     if (game.players[socket.id]) game.players[socket.id].score += points;
