@@ -262,12 +262,14 @@
             ${q.mediaUrl
               ? (q.mediaType === 'video'
                 ? `<video src="${q.mediaUrl}" controls style="max-height:140px;border-radius:8px;display:block;margin-bottom:8px"></video>`
+                : q.mediaType === 'audio'
+                ? `<audio src="${q.mediaUrl}" controls style="display:block;margin-bottom:8px"></audio>`
                 : `<img src="${q.mediaUrl}" style="max-height:140px;border-radius:8px;display:block;margin-bottom:8px">`)
               : ''}
             <div style="display:flex;gap:8px;align-items:center">
               <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0">
-                📎 ${q.mediaUrl ? 'Replace' : 'Upload image / video'}
-                <input type="file" accept="image/*,video/mp4,video/webm" style="display:none"
+                📎 ${q.mediaUrl ? 'Replace' : 'Upload image / video / audio'}
+                <input type="file" accept="image/*,video/mp4,video/webm,audio/*" style="display:none"
                   onchange="uploadMedia(${i}, this)">
               </label>
               ${q.mediaUrl ? `<button class="btn btn-ghost btn-sm" onclick="removeMedia(${i})">Remove</button>` : ''}

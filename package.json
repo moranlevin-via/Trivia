@@ -1,7 +1,7 @@
 {
-  "name": "kahoot-platform",
+  "name": "trivia-platform",
   "version": "1.0.0",
-  "description": "Personal Kahoot-like quiz platform",
+  "description": "Personal TriVia quiz platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

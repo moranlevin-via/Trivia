@@ -31,7 +31,7 @@ const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm'];
     cb(null, allowed.includes(file.mimetype));
   },
 });
@@ -40,7 +40,9 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
-  const mediaType = req.file.mimetype.startsWith('video') ? 'video' : 'image';
+  let mediaType = 'image';
+  if (req.file.mimetype.startsWith('video')) mediaType = 'video';
+  else if (req.file.mimetype.startsWith('audio')) mediaType = 'audio';
   res.json({ url: `/uploads/${req.file.filename}`, mediaType });
 });
 

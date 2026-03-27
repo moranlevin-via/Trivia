@@ -252,9 +252,13 @@
 
       const mediaEl = document.getElementById('q-media');
       if (q.mediaUrl) {
-        mediaEl.innerHTML = q.mediaType === 'video'
-          ? `<video src="${q.mediaUrl}" autoplay muted controls style="max-height:220px;border-radius:10px"></video>`
-          : `<img src="${q.mediaUrl}" style="max-height:220px;border-radius:10px">`;
+        if (q.mediaType === 'video') {
+          mediaEl.innerHTML = `<video src="${q.mediaUrl}" autoplay muted controls style="max-height:220px;border-radius:10px"></video>`;
+        } else if (q.mediaType === 'audio') {
+          mediaEl.innerHTML = `<audio src="${q.mediaUrl}" autoplay controls style="width:100%;margin:8px 0"></audio>`;
+        } else {
+          mediaEl.innerHTML = `<img src="${q.mediaUrl}" style="max-height:220px;border-radius:10px">`;
+        }
       } else {
         mediaEl.innerHTML = '';
       }
