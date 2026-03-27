@@ -248,7 +248,9 @@
       currentQ = q;
       answeredCount = 0;
       document.getElementById('q-meta').textContent = `Question ${q.index + 1} of ${q.total}`;
-      document.getElementById('q-text').textContent = q.question;
+      const qTextEl = document.getElementById('q-text');
+      qTextEl.textContent = q.question;
+      qTextEl.dir = q.dir || 'rtl';
 
       const mediaEl = document.getElementById('q-media');
       if (q.mediaUrl) {
@@ -266,7 +268,7 @@
       const optClasses = ['opt-a', 'opt-b', 'opt-c', 'opt-d'];
       const optIcons = ['▲', '◆', '●', '■'];
       document.getElementById('q-options').innerHTML = q.options.map((opt, i) => `
-        <div class="host-opt ${optClasses[i]}" id="hostopt-${i}">
+        <div class="host-opt ${optClasses[i]}" id="hostopt-${i}" dir="${q.dir || 'rtl'}">
           <span style="font-size:1.1rem">${optIcons[i]}</span>
           ${esc(opt)}
           <span class="correct-mark">✓</span>

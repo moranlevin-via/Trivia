@@ -221,14 +221,20 @@
         </div>
         <div class="field">
           <label>Question Text</label>
-          <textarea class="textarea" rows="2" placeholder="Enter your question..." dir="rtl"
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <button class="btn btn-sm ${(q.dir||'rtl')==='rtl' ? 'btn-primary' : 'btn-outline'}"
+              onclick="setDir(${i},'rtl',this)">עברית ←</button>
+            <button class="btn btn-sm ${(q.dir||'rtl')==='ltr' ? 'btn-primary' : 'btn-outline'}"
+              onclick="setDir(${i},'ltr',this)">→ English</button>
+          </div>
+          <textarea class="textarea" rows="2" placeholder="Enter your question..." dir="${q.dir||'rtl'}"
             onchange="updateQ(${i}, 'question', this.value)">${esc(q.question || '')}</textarea>
         </div>
         <div class="options-grid">
           ${opts.map((opt, j) => `
             <div class="option-input-wrap">
               <span class="opt-dot ${colors[j]}"></span>
-              <input class="input" type="text" placeholder="Option ${opt}" dir="rtl"
+              <input class="input" type="text" placeholder="Option ${opt}" dir="${q.dir||'rtl'}"
                 value="${esc((q.options || [])[j] || '')}"
                 onchange="updateOption(${i}, ${j}, this.value)">
             </div>
@@ -339,6 +345,11 @@
     function removeMedia(i) {
       questions[i].mediaUrl = null;
       questions[i].mediaType = null;
+      renderQuestions();
+    }
+
+    function setDir(i, dir, btn) {
+      questions[i].dir = dir;
       renderQuestions();
     }
 

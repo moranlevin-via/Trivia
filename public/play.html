@@ -266,10 +266,12 @@
 
     function renderQuestion(q) {
       document.getElementById('p-q-meta').textContent = `Question ${q.index + 1} / ${q.total}`;
-      document.getElementById('p-q-text').textContent = q.question;
+      const pTextEl = document.getElementById('p-q-text');
+      pTextEl.textContent = q.question;
+      pTextEl.dir = q.dir || 'rtl';
 
       document.getElementById('p-options').innerHTML = q.options.map((opt, i) => `
-        <button class="option-btn ${OPT_CLASSES[i]}" id="popt-${i}" onclick="submitAnswer(${i}, '${q.timeLimit}')">
+        <button class="option-btn ${OPT_CLASSES[i]}" id="popt-${i}" dir="${q.dir || 'rtl'}" onclick="submitAnswer(${i}, '${q.timeLimit}')">
           <span class="opt-icon">${OPT_ICONS[i]}</span>
           ${esc(opt)}
         </button>`).join('');
