@@ -107,6 +107,7 @@
         <div class="question-display">
           <div class="timer-bar-wrap"><div id="timer-bar" class="timer-bar" style="width:100%"></div></div>
           <div class="q-meta" id="q-meta"></div>
+          <div id="q-media" style="margin:12px 0"></div>
           <div class="q-text" id="q-text"></div>
           <div class="host-options-grid" id="q-options"></div>
         </div>
@@ -248,6 +249,15 @@
       answeredCount = 0;
       document.getElementById('q-meta').textContent = `Question ${q.index + 1} of ${q.total}`;
       document.getElementById('q-text').textContent = q.question;
+
+      const mediaEl = document.getElementById('q-media');
+      if (q.mediaUrl) {
+        mediaEl.innerHTML = q.mediaType === 'video'
+          ? `<video src="${q.mediaUrl}" autoplay muted controls style="max-height:220px;border-radius:10px"></video>`
+          : `<img src="${q.mediaUrl}" style="max-height:220px;border-radius:10px">`;
+      } else {
+        mediaEl.innerHTML = '';
+      }
 
       const optClasses = ['opt-a', 'opt-b', 'opt-c', 'opt-d'];
       const optIcons = ['▲', '◆', '●', '■'];

@@ -256,6 +256,25 @@
             `).join('')}
           </div>
         </div>
+        <div style="margin-top:14px">
+          <label>Media (optional)</label>
+          <div id="media-wrap-${i}" style="margin-top:8px">
+            ${q.mediaUrl
+              ? (q.mediaType === 'video'
+                ? `<video src="${q.mediaUrl}" controls style="max-height:140px;border-radius:8px;display:block;margin-bottom:8px"></video>`
+                : `<img src="${q.mediaUrl}" style="max-height:140px;border-radius:8px;display:block;margin-bottom:8px">`)
+              : ''}
+            <div style="display:flex;gap:8px;align-items:center">
+              <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0">
+                📎 ${q.mediaUrl ? 'Replace' : 'Upload image / video'}
+                <input type="file" accept="image/*,video/mp4,video/webm" style="display:none"
+                  onchange="uploadMedia(${i}, this)">
+              </label>
+              ${q.mediaUrl ? `<button class="btn btn-ghost btn-sm" onclick="removeMedia(${i})">Remove</button>` : ''}
+              <span id="upload-status-${i}" style="font-size:0.8rem;color:var(--text-muted)"></span>
+            </div>
+          </div>
+        </div>
       </div>`;
     }
 
@@ -295,6 +314,30 @@
       const wrap = btn.closest('.time-select');
       wrap.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+    }
+
+    async function uploadMedia(i, input) {
+      const file = input.files[0];
+      if (!file) return;
+      const status = document.getElementById(`upload-status-${i}`);
+      if (status) status.textContent = 'Uploading...';
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        questions[i].mediaUrl = data.url;
+        questions[i].mediaType = data.mediaType;
+        renderQuestions();
+      } catch {
+        if (status) status.textContent = 'Upload failed';
+      }
+    }
+
+    function removeMedia(i) {
+      questions[i].mediaUrl = null;
+      questions[i].mediaType = null;
+      renderQuestions();
     }
 
     // ── Save ──────────────────────────────────────────────────────────────────

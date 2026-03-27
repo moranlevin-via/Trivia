@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 
 const app = express();
 const server = http.createServer(app);
@@ -10,6 +11,38 @@ const io = new Server(server);
 
 app.use(express.json());
 app.use(express.static('public'));
+
+// ── File uploads ──────────────────────────────────────────────────────────────
+
+const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+    cb(null, allowed.includes(file.mimetype));
+  },
+});
+
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  const mediaType = req.file.mimetype.startsWith('video') ? 'video' : 'image';
+  res.json({ url: `/uploads/${req.file.filename}`, mediaType });
+});
 
 // ── Quiz storage ──────────────────────────────────────────────────────────────
 
@@ -90,6 +123,8 @@ function sendQuestion(code) {
     question: q.question,
     options: q.options,
     timeLimit: q.timeLimit || 20,
+    mediaUrl: q.mediaUrl || null,
+    mediaType: q.mediaType || null,
   };
 
   io.to(code).emit('question', payload);
