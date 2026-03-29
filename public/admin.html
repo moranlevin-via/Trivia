@@ -35,9 +35,58 @@
     .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
     #editor-section { display: none; }
     #editor-section.visible { display: block; }
+    #auth-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #auth-overlay.hidden { display: none; }
+    .auth-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 40px 32px; width: 100%; max-width: 360px; text-align: center;
+    }
+    .auth-card h2 { margin: 0 0 8px; font-size: 1.4rem; }
+    .auth-card p { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 24px; }
+    #auth-error { color: #f87171; font-size: 0.85rem; margin-top: 10px; min-height: 18px; }
   </style>
 </head>
 <body>
+
+  <div id="auth-overlay">
+    <div class="auth-card">
+      <h2>Admin Panel</h2>
+      <p>Enter the admin password to continue</p>
+      <input id="auth-input" class="input" type="password" placeholder="Password"
+        style="width:100%;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')checkAuth()">
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="checkAuth()">Enter</button>
+      <div id="auth-error"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      if (sessionStorage.getItem('admin-auth') === '1') {
+        document.getElementById('auth-overlay').classList.add('hidden');
+      } else {
+        document.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('auth-input').focus();
+        });
+      }
+    })();
+    function checkAuth() {
+      const val = document.getElementById('auth-input').value;
+      if (val === 'Viavia2020!') {
+        sessionStorage.setItem('admin-auth', '1');
+        document.getElementById('auth-overlay').classList.add('hidden');
+      } else {
+        document.getElementById('auth-error').textContent = 'Incorrect password';
+        document.getElementById('auth-input').value = '';
+        document.getElementById('auth-input').focus();
+      }
+    }
+  </script>
+
   <nav class="navbar">
     <a href="/" style="text-decoration:none"><img src="/via-logo.png" style="height:36px;display:block"></a>
     <span class="text-muted" style="font-size:0.9rem">Admin Panel</span>
