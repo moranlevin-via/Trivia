@@ -109,6 +109,11 @@
     </div>
   </div>
 
+  <!-- Feedback (3s) -->
+  <div id="screen-feedback" class="page-center" style="display:none">
+    <div id="feedback-banner" class="result-banner fade-in" style="font-size:1.6rem;padding:40px 32px"></div>
+  </div>
+
   <!-- Per-question result -->
   <div id="screen-results" class="page-center">
     <div style="width:100%;max-width:520px">
@@ -222,17 +227,27 @@
       socket.on('question-ended', ({ correctAnswer, leaderboard }) => {
         clearInterval(timerInterval);
 
-        const banner = document.getElementById('result-banner');
-        if (answered) {
-          // already got answer-result
-        }
-        // We can check from DOM if they answered
-        const wasCorrect = answered && document.getElementById(`popt-${correctAnswer}`) &&
-                           document.querySelector('.selected-opt')?.id === `popt-${correctAnswer}`;
+        const selected = document.querySelector('.selected-opt');
+        const selectedIdx = selected ? parseInt(selected.id.replace('popt-', '')) : -1;
+        const isCorrect = selectedIdx === correctAnswer;
 
-        // Show result screen
-        renderQuestionResults(correctAnswer, leaderboard);
-        showScreen('results');
+        const fb = document.getElementById('feedback-banner');
+        if (selectedIdx === -1) {
+          fb.className = 'result-banner wrong fade-in';
+          fb.innerHTML = '<div style="font-size:2.5rem">⏱️</div><div>Time\'s up!</div>';
+        } else if (isCorrect) {
+          fb.className = 'result-banner correct fade-in';
+          fb.innerHTML = '<div style="font-size:2.5rem">✓</div><div>Correct!</div>';
+        } else {
+          fb.className = 'result-banner wrong fade-in';
+          fb.innerHTML = '<div style="font-size:2.5rem">✕</div><div>Wrong!</div>';
+        }
+
+        showScreen('feedback');
+        setTimeout(() => {
+          renderQuestionResults(correctAnswer, leaderboard);
+          showScreen('results');
+        }, 3000);
       });
 
       socket.on('game-ended', ({ leaderboard }) => {
@@ -369,11 +384,11 @@
     // ── Util ──────────────────────────────────────────────────────────────────
 
     function showScreen(name) {
-      const names = ['join', 'wait', 'lobby', 'question', 'answered', 'results', 'final'];
+      const names = ['join', 'wait', 'lobby', 'question', 'answered', 'feedback', 'results', 'final'];
       names.forEach(s => {
         const el = document.getElementById(`screen-${s}`);
         if (el) el.style.display = s === name
-          ? (['join','wait','lobby','answered','results','final'].includes(s) ? 'flex' : 'block')
+          ? (['join','wait','lobby','answered','feedback','results','final'].includes(s) ? 'flex' : 'block')
           : 'none';
       });
     }
