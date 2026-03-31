@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +12,66 @@ const io = new Server(server);
 
 app.use(express.json());
 app.use(express.static('public'));
+
+// ── Admin auth ────────────────────────────────────────────────────────────────
+
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Viavia2020!';
+const ADMIN_TOKEN_TTL_MS = 1000 * 60 * 60 * 12; // 12 hours
+const adminTokens = new Map(); // token -> expiresAt
+
+function createAdminToken() {
+  const token = crypto.randomBytes(24).toString('hex');
+  adminTokens.set(token, Date.now() + ADMIN_TOKEN_TTL_MS);
+  return token;
+}
+
+function isValidAdminToken(token) {
+  if (!token) return false;
+  const expiresAt = adminTokens.get(token);
+  if (!expiresAt) return false;
+  if (expiresAt < Date.now()) {
+    adminTokens.delete(token);
+    return false;
+  }
+  return true;
+}
+
+function requireAdmin(req, res, next) {
+  const token = req.header('x-admin-token');
+  if (!isValidAdminToken(token)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, expiresAt] of adminTokens.entries()) {
+    if (expiresAt < now) adminTokens.delete(token);
+  }
+}, 1000 * 60 * 10);
+
+app.post('/api/admin/login', (req, res) => {
+  const password = String(req.body?.password || '');
+  if (password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid password' });
+  }
+  res.json({ token: createAdminToken() });
+});
+
+app.get('/api/admin/verify', (req, res) => {
+  const token = req.header('x-admin-token');
+  if (!isValidAdminToken(token)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/logout', requireAdmin, (req, res) => {
+  const token = req.header('x-admin-token');
+  adminTokens.delete(token);
+  res.json({ ok: true });
+});
 
 // ── File uploads ──────────────────────────────────────────────────────────────
 
@@ -38,7 +99,7 @@ const upload = multer({
 
 app.use('/uploads', express.static(UPLOADS_DIR));
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
+app.post('/api/upload', requireAdmin, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   let mediaType = 'image';
   if (req.file.mimetype.startsWith('video')) mediaType = 'video';
@@ -67,14 +128,14 @@ function saveQuizzes(quizzes) {
 
 // ── REST API ──────────────────────────────────────────────────────────────────
 
-app.get('/api/quizzes', (req, res) => res.json(loadQuizzes()));
+app.get('/api/quizzes', requireAdmin, (req, res) => res.json(loadQuizzes()));
 
-app.get('/api/quizzes/:id', (req, res) => {
+app.get('/api/quizzes/:id', requireAdmin, (req, res) => {
   const quiz = loadQuizzes().find(q => q.id === req.params.id);
   quiz ? res.json(quiz) : res.status(404).json({ error: 'Not found' });
 });
 
-app.post('/api/quizzes', (req, res) => {
+app.post('/api/quizzes', requireAdmin, (req, res) => {
   const quizzes = loadQuizzes();
   const quiz = { id: Date.now().toString(), ...req.body, createdAt: new Date().toISOString() };
   quizzes.push(quiz);
@@ -82,7 +143,7 @@ app.post('/api/quizzes', (req, res) => {
   res.json(quiz);
 });
 
-app.put('/api/quizzes/:id', (req, res) => {
+app.put('/api/quizzes/:id', requireAdmin, (req, res) => {
   const quizzes = loadQuizzes();
   const idx = quizzes.findIndex(q => q.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
@@ -91,7 +152,7 @@ app.put('/api/quizzes/:id', (req, res) => {
   res.json(quizzes[idx]);
 });
 
-app.delete('/api/quizzes/:id', (req, res) => {
+app.delete('/api/quizzes/:id', requireAdmin, (req, res) => {
   const quizzes = loadQuizzes().filter(q => q.id !== req.params.id);
   saveQuizzes(quizzes);
   res.json({ ok: true });

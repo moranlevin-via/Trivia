@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TriVia Codebase Diagram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090909;
+      --panel: #111111;
+      --panel-2: #181818;
+      --text: #f2f2f2;
+      --muted: #a9a9a9;
+      --edge: #4a4a4a;
+      --accent: #f97316;
+      --accent-2: #22d3ee;
+      --ok: #34d399;
+      --warn: #fbbf24;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 10% 10%, #1b1b1b 0%, var(--bg) 45%);
+      color: var(--text);
+      font-family: "IBM Plex Mono", monospace;
+      min-height: 100vh;
+      padding: 28px;
+    }
+
+    .title {
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 64px;
+      letter-spacing: 2px;
+      margin: 0;
+      line-height: 0.9;
+    }
+    .subtitle {
+      margin: 8px 0 22px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid #2e2e2e;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-family: "Bebas Neue", sans-serif;
+      letter-spacing: 1px;
+      font-size: 30px;
+      color: var(--accent);
+    }
+
+    .nodes {
+      position: relative;
+      min-height: 460px;
+      overflow: hidden;
+    }
+
+    .node {
+      position: absolute;
+      width: 170px;
+      border: 1px solid #3b3b3b;
+      border-radius: 10px;
+      background: #131313;
+      padding: 10px;
+      font-size: 11px;
+      line-height: 1.35;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      cursor: default;
+    }
+    .node:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-2);
+      box-shadow: 0 8px 20px rgba(34, 211, 238, 0.12);
+    }
+    .node .name {
+      display: block;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .node .meta {
+      color: var(--muted);
+    }
+    .tag {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid #404040;
+      color: #d2d2d2;
+      font-size: 10px;
+    }
+    .tag.server { border-color: var(--accent); color: #fdba74; }
+    .tag.client { border-color: var(--accent-2); color: #67e8f9; }
+    .tag.data { border-color: var(--ok); color: #6ee7b7; }
+
+    svg.edges {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .edge {
+      stroke: var(--edge);
+      stroke-width: 1.5;
+      fill: none;
+      stroke-dasharray: 4 5;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .legend span { border: 1px solid #3d3d3d; border-radius: 999px; padding: 4px 8px; }
+
+    .tree-wrap {
+      border: 1px solid #2f2f2f;
+      border-radius: 10px;
+      padding: 12px;
+      background: #0f0f0f;
+      max-height: 460px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    details { margin: 4px 0 0 14px; }
+    summary {
+      cursor: pointer;
+      color: #e5e5e5;
+      list-style: none;
+      padding: 2px 0;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::before {
+      content: "▸";
+      margin-right: 6px;
+      color: var(--warn);
+    }
+    details[open] > summary::before { content: "▾"; }
+    .file {
+      margin-left: 22px;
+      color: #d0d0d0;
+      padding: 2px 0;
+    }
+    .ignore {
+      color: #767676;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="title">TriVia / Codebase Diagram</h1>
+  <p class="subtitle">Architecture + filesystem map (server, realtime events, static pages, persisted data)</p>
+
+  <div class="layout">
+    <section class="panel">
+      <h2>Runtime Architecture</h2>
+      <div class="legend">
+        <span>Express REST</span>
+        <span>Socket.io realtime</span>
+        <span>Static pages</span>
+        <span>JSON + uploads storage</span>
+      </div>
+      <div class="nodes" id="nodes-area">
+        <svg class="edges" viewBox="0 0 900 460" preserveAspectRatio="none">
+          <path class="edge" d="M130 100 C 220 100, 250 88, 330 88"></path>
+          <path class="edge" d="M130 100 C 220 100, 250 156, 330 156"></path>
+          <path class="edge" d="M130 100 C 220 100, 250 225, 330 225"></path>
+          <path class="edge" d="M130 100 C 220 100, 250 294, 330 294"></path>
+          <path class="edge" d="M500 88 C 580 88, 610 190, 690 190"></path>
+          <path class="edge" d="M500 156 C 580 156, 610 190, 690 190"></path>
+          <path class="edge" d="M500 225 C 580 225, 610 190, 690 190"></path>
+          <path class="edge" d="M500 294 C 580 294, 610 190, 690 190"></path>
+          <path class="edge" d="M500 88 C 570 88, 620 56, 690 56"></path>
+          <path class="edge" d="M500 225 C 570 225, 620 320, 690 320"></path>
+        </svg>
+
+        <article class="node" style="left:30px; top:74px;">
+          <span class="name">`server.js`</span>
+          <div class="meta">Express app + HTTP server + Socket.io hub.</div>
+          <span class="tag server">backend</span>
+        </article>
+
+        <article class="node" style="left:330px; top:52px;">
+          <span class="name">`public/index.html`</span>
+          <div class="meta">Entry: join game or go to admin panel.</div>
+          <span class="tag client">client</span>
+        </article>
+
+        <article class="node" style="left:330px; top:120px;">
+          <span class="name">`public/admin.html`</span>
+          <div class="meta">Quiz CRUD, upload media, launch host.</div>
+          <span class="tag client">client</span>
+        </article>
+
+        <article class="node" style="left:330px; top:189px;">
+          <span class="name">`public/host.html`</span>
+          <div class="meta">Creates room, controls game flow, leaderboard.</div>
+          <span class="tag client">client</span>
+        </article>
+
+        <article class="node" style="left:330px; top:258px;">
+          <span class="name">`public/play.html`</span>
+          <div class="meta">Player joins room, answers timed questions.</div>
+          <span class="tag client">client</span>
+        </article>
+
+        <article class="node" style="left:690px; top:30px;">
+          <span class="name">`data/quizzes.json`</span>
+          <div class="meta">Quiz persistence for REST create/update/delete.</div>
+          <span class="tag data">storage</span>
+        </article>
+
+        <article class="node" style="left:690px; top:164px;">
+          <span class="name">Socket events</span>
+          <div class="meta">`create-game`, `join-game`, `submit-answer`, `question-ended`, `game-ended`.</div>
+          <span class="tag server">realtime</span>
+        </article>
+
+        <article class="node" style="left:690px; top:294px;">
+          <span class="name">`data/uploads/*`</span>
+          <div class="meta">Media files uploaded from admin questions.</div>
+          <span class="tag data">storage</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Filesystem Tree</h2>
+      <div class="tree-wrap">
+        <details open>
+          <summary>`TriVia/`</summary>
+          <div class="file">`server.js`</div>
+          <div class="file">`package.json`</div>
+          <div class="file">`package-lock.json`</div>
+          <div class="file">`Via Logo.png`</div>
+          <div class="file">`codebase-diagram.html`</div>
+
+          <details open>
+            <summary>`public/`</summary>
+            <div class="file">`index.html`</div>
+            <div class="file">`admin.html`</div>
+            <div class="file">`host.html`</div>
+            <div class="file">`play.html`</div>
+            <div class="file">`style.css`</div>
+            <div class="file">`via-logo.png`</div>
+          </details>
+
+          <details open>
+            <summary>`data/`</summary>
+            <div class="file">`quizzes.json` (created at runtime)</div>
+            <details>
+              <summary>`uploads/`</summary>
+              <div class="file">(media files created at runtime)</div>
+            </details>
+          </details>
+
+          <details>
+            <summary>`node_modules/`</summary>
+            <div class="file ignore">(dependency tree omitted)</div>
+          </details>
+        </details>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

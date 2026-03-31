@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin – TriVia</title>
+  <title>Admin - TriVia</title>
   <link rel="stylesheet" href="style.css">
   <style>
     .page-layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; padding: 24px; max-width: 1300px; margin: 0 auto; }
@@ -11,81 +11,35 @@
     .sidebar { position: sticky; top: 72px; height: fit-content; }
     .panel-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
     .correct-radio { display: flex; gap: 8px; margin-top: 8px; }
-    .correct-radio label {
-      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 8px; border: 1.5px solid var(--border); border-radius: 8px;
-      cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.15s;
-      text-transform: none; letter-spacing: 0; color: var(--text); margin: 0;
-    }
+    .correct-radio label { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--text); margin: 0; }
     .correct-radio input { display: none; }
     .correct-radio input:checked + label { border-color: var(--correct); background: #14532d; color: #86efac; }
     .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .dot.a { background: var(--opt-a); }
-    .dot.b { background: var(--opt-b); }
-    .dot.c { background: var(--opt-c); }
-    .dot.d { background: var(--opt-d); }
+    .dot.a { background: var(--opt-a); } .dot.b { background: var(--opt-b); } .dot.c { background: var(--opt-c); } .dot.d { background: var(--opt-d); }
     .time-select { display: flex; gap: 8px; }
-    .time-btn {
-      flex: 1; padding: 8px; border: 1.5px solid var(--border); border-radius: 8px;
-      background: transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 600;
-      cursor: pointer; transition: all 0.15s;
-    }
+    .time-btn { flex: 1; padding: 8px; border: 1.5px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
     .time-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
     .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
     .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
-    #editor-section { display: none; }
-    #editor-section.visible { display: block; }
-    #auth-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
-    }
+    #editor-section { display: none; } #editor-section.visible { display: block; }
+    #auth-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; align-items: center; justify-content: center; }
     #auth-overlay.hidden { display: none; }
-    .auth-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 40px 32px; width: 100%; max-width: 360px; text-align: center;
-    }
+    .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 360px; text-align: center; }
     .auth-card h2 { margin: 0 0 8px; font-size: 1.4rem; }
     .auth-card p { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 24px; }
     #auth-error { color: #f87171; font-size: 0.85rem; margin-top: 10px; min-height: 18px; }
   </style>
 </head>
 <body>
-
   <div id="auth-overlay">
     <div class="auth-card">
       <h2>Admin Panel</h2>
       <p>Enter the admin password to continue</p>
-      <input id="auth-input" class="input" type="password" placeholder="Password"
-        style="width:100%;box-sizing:border-box"
-        onkeydown="if(event.key==='Enter')checkAuth()">
-      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="checkAuth()">Enter</button>
+      <input id="auth-input" class="input" type="password" placeholder="Password" style="width:100%;box-sizing:border-box">
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" id="auth-btn">Enter</button>
       <div id="auth-error"></div>
     </div>
   </div>
-
-  <script>
-    (function() {
-      if (sessionStorage.getItem('admin-auth') === '1') {
-        document.getElementById('auth-overlay').classList.add('hidden');
-      } else {
-        document.addEventListener('DOMContentLoaded', () => {
-          document.getElementById('auth-input').focus();
-        });
-      }
-    })();
-    function checkAuth() {
-      const val = document.getElementById('auth-input').value;
-      if (val === 'Viavia2020!') {
-        sessionStorage.setItem('admin-auth', '1');
-        document.getElementById('auth-overlay').classList.add('hidden');
-      } else {
-        document.getElementById('auth-error').textContent = 'Incorrect password';
-        document.getElementById('auth-input').value = '';
-        document.getElementById('auth-input').focus();
-      }
-    }
-  </script>
 
   <nav class="navbar">
     <a href="/" style="text-decoration:none"><img src="/via-logo.png" style="height:36px;display:block"></a>
@@ -94,69 +48,52 @@
   </nav>
 
   <div class="page-layout">
-
-    <!-- Left: Quiz list -->
     <aside class="sidebar">
       <div class="card" style="padding:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <div class="panel-title" style="margin:0">My Quizzes</div>
-          <button class="btn btn-primary btn-sm" onclick="newQuiz()">+ New</button>
+          <button class="btn btn-primary btn-sm" id="new-btn">+ New</button>
         </div>
-        <div id="quiz-list">
-          <div class="empty-state">
-            <div class="icon">📋</div>
-            <p>No quizzes yet</p>
-          </div>
-        </div>
+        <div id="quiz-list"><div class="empty-state"><div class="icon">📋</div><p>No quizzes yet</p></div></div>
       </div>
     </aside>
 
-    <!-- Right: Editor -->
     <main>
       <div id="editor-section">
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
             <h2 id="editor-title">New Quiz</h2>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-danger btn-sm" id="delete-btn" onclick="deleteQuiz()" style="display:none">Delete</button>
-              <button class="btn btn-primary btn-sm" onclick="saveQuiz()">Save Quiz</button>
+              <button class="btn btn-danger btn-sm" id="delete-btn" style="display:none">Delete</button>
+              <button class="btn btn-primary btn-sm" id="save-btn">Save Quiz</button>
             </div>
           </div>
-
           <div class="field">
             <label>Quiz Title</label>
             <input id="quiz-title" class="input" type="text" placeholder="e.g. General Knowledge">
           </div>
-
           <hr class="divider">
-
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <h3>Questions <span id="q-count" class="badge badge-blue">0</span></h3>
-            <button class="btn btn-outline btn-sm" onclick="addQuestion()">+ Add Question</button>
+            <button class="btn btn-outline btn-sm" id="add-q-btn">+ Add Question</button>
           </div>
-
           <div id="questions-container"></div>
-
           <div class="empty-state hidden" id="no-questions">
             <div class="icon">❓</div>
             <p>Add your first question</p>
-            <button class="btn btn-primary" style="margin-top:16px" onclick="addQuestion()">Add Question</button>
+            <button class="btn btn-primary" style="margin-top:16px" id="add-q-empty">Add Question</button>
           </div>
         </div>
-
-        <!-- Host this quiz -->
-        <div class="card" style="margin-top:16px" id="host-panel" style="display:none">
+        <div class="card" style="margin-top:16px" id="host-panel">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div>
               <h3>Ready to play?</h3>
               <p class="text-muted" style="margin-top:4px">Start a live game session</p>
             </div>
-            <button class="btn btn-primary btn-lg" id="host-btn" onclick="hostGame()">Host Game</button>
+            <button class="btn btn-primary btn-lg" id="host-btn">Host Game</button>
           </div>
         </div>
       </div>
-
-      <!-- Placeholder -->
       <div id="no-editor" class="empty-state">
         <div class="icon">✏️</div>
         <p>Select a quiz or create a new one</p>
@@ -167,330 +104,348 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    let quizzes = [];
-    let currentQuizId = null;
-    let questions = []; // local copy while editing
+    const state = { quizzes: [], currentQuizId: null, questions: [] };
 
-    // ── Load quizzes ──────────────────────────────────────────────────────────
+    const els = {
+      authOverlay: document.getElementById("auth-overlay"),
+      authInput: document.getElementById("auth-input"),
+      authError: document.getElementById("auth-error"),
+      authBtn: document.getElementById("auth-btn"),
+      quizList: document.getElementById("quiz-list"),
+      editorSection: document.getElementById("editor-section"),
+      noEditor: document.getElementById("no-editor"),
+      editorTitle: document.getElementById("editor-title"),
+      quizTitle: document.getElementById("quiz-title"),
+      deleteBtn: document.getElementById("delete-btn"),
+      hostPanel: document.getElementById("host-panel"),
+      questionsContainer: document.getElementById("questions-container"),
+      noQuestions: document.getElementById("no-questions"),
+      qCount: document.getElementById("q-count"),
+      toast: document.getElementById("toast")
+    };
 
-    async function loadQuizzes() {
-      const res = await fetch('/api/quizzes');
-      quizzes = await res.json();
-      renderQuizList();
+    function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    function toast(msg, type = "") {
+      els.toast.textContent = msg;
+      els.toast.className = "toast show" + (type === "err" ? " toast-err" : type === "ok" ? " toast-ok" : "");
+      clearTimeout(els.toast._t);
+      els.toast._t = setTimeout(() => els.toast.classList.remove("show"), 2600);
+    }
+
+    function getAdminToken() { return sessionStorage.getItem("admin-token") || ""; }
+    function setAdminToken(token) { sessionStorage.setItem("admin-token", token); }
+    function clearAdminToken() { sessionStorage.removeItem("admin-token"); }
+
+    async function apiFetch(url, options = {}) {
+      const headers = new Headers(options.headers || {});
+      const token = getAdminToken();
+      if (token) headers.set("x-admin-token", token);
+      const res = await fetch(url, { ...options, headers });
+      if (res.status === 401) {
+        clearAdminToken();
+        els.authOverlay.classList.remove("hidden");
+        els.authError.textContent = "Session expired. Please login again.";
+        throw new Error("Unauthorized");
+      }
+      return res;
+    }
+
+    async function checkAuth() {
+      const password = els.authInput.value.trim();
+      if (!password) return;
+      els.authBtn.disabled = true;
+      els.authError.textContent = "";
+      try {
+        const res = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password })
+        });
+        if (!res.ok) {
+          els.authError.textContent = "Incorrect password";
+          els.authInput.value = "";
+          els.authInput.focus();
+          return;
+        }
+        const data = await res.json();
+        setAdminToken(data.token);
+        els.authOverlay.classList.add("hidden");
+        els.authInput.value = "";
+        await loadQuizzes();
+      } finally {
+        els.authBtn.disabled = false;
+      }
+    }
+
+    function showEditor() {
+      els.editorSection.classList.add("visible");
+      els.noEditor.style.display = "none";
+    }
+
+    function setSelectedStyle() {
+      document.querySelectorAll(".quiz-item").forEach((item) => {
+        const active = item.dataset.id === state.currentQuizId;
+        item.style.borderColor = active ? "var(--primary)" : "var(--border)";
+        item.style.background = active ? "var(--surface2)" : "";
+      });
     }
 
     function renderQuizList() {
-      const el = document.getElementById('quiz-list');
-      if (quizzes.length === 0) {
-        el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No quizzes yet</p></div>';
+      if (!state.quizzes.length) {
+        els.quizList.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No quizzes yet</p></div>';
         return;
       }
-      el.innerHTML = quizzes.map(q => `
-        <div class="quiz-item" id="qi-${q.id}" onclick="selectQuiz('${q.id}')" style="cursor:pointer;margin-bottom:8px;border-radius:10px;transition:border-color 0.15s" data-id="${q.id}">
+      els.quizList.innerHTML = state.quizzes.map((q) => `
+        <div class="quiz-item" data-id="${q.id}" style="cursor:pointer;margin-bottom:8px;border-radius:10px;transition:border-color 0.15s">
           <div class="quiz-info">
             <div class="quiz-title">${esc(q.title)}</div>
             <div class="quiz-meta">${(q.questions || []).length} questions</div>
           </div>
           <span style="color:var(--text-muted);font-size:1.2rem">›</span>
         </div>
-      `).join('');
-    }
-
-    // ── Select quiz ───────────────────────────────────────────────────────────
-
-    function selectQuiz(id) {
-      const quiz = quizzes.find(q => q.id === id);
-      if (!quiz) return;
-      currentQuizId = id;
-      questions = JSON.parse(JSON.stringify(quiz.questions || []));
-
-      document.getElementById('editor-title').textContent = 'Edit Quiz';
-      document.getElementById('quiz-title').value = quiz.title || '';
-      document.getElementById('delete-btn').style.display = '';
-      document.getElementById('host-panel').style.display = '';
-
-      // Highlight selected
-      document.querySelectorAll('.quiz-item').forEach(el => {
-        el.style.borderColor = el.dataset.id === id ? 'var(--primary)' : 'var(--border)';
-        el.style.background = el.dataset.id === id ? 'var(--surface2)' : '';
+      `).join("");
+      document.querySelectorAll(".quiz-item").forEach((item) => {
+        item.addEventListener("click", () => selectQuiz(item.dataset.id));
       });
-
-      showEditor();
-      renderQuestions();
+      setSelectedStyle();
     }
 
-    // ── New quiz ──────────────────────────────────────────────────────────────
+    function questionTemplate(q, i) {
+      const opts = ["A", "B", "C", "D"];
+      const dots = ["a", "b", "c", "d"];
+      const times = [10, 20, 30, 60];
+      const dir = q.dir || "rtl";
+      return `
+        <div class="question-block fade-in" data-index="${i}">
+          <div class="q-header">
+            <span class="q-number">Question ${i + 1}</span>
+            <button class="btn btn-ghost btn-sm" data-action="remove-question" data-index="${i}">✕ Remove</button>
+          </div>
+          <div class="field">
+            <label>Question Text</label>
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <button class="btn btn-sm ${dir === "rtl" ? "btn-primary" : "btn-outline"}" data-action="set-dir" data-index="${i}" data-dir="rtl">Hebrew ←</button>
+              <button class="btn btn-sm ${dir === "ltr" ? "btn-primary" : "btn-outline"}" data-action="set-dir" data-index="${i}" data-dir="ltr">→ English</button>
+            </div>
+            <textarea class="textarea q-textarea" rows="2" dir="${dir}" placeholder="Enter your question...">${esc(q.question || "")}</textarea>
+          </div>
+          <div class="options-grid">
+            ${opts.map((opt, j) => `
+              <div class="option-input-wrap">
+                <span class="opt-dot ${dots[j]}"></span>
+                <input class="input q-option" type="text" dir="${dir}" data-opt-index="${j}" placeholder="Option ${opt}" value="${esc((q.options || [])[j] || "")}">
+              </div>
+            `).join("")}
+          </div>
+          <div style="margin-top:14px">
+            <label>Correct Answer</label>
+            <div class="correct-radio">
+              ${opts.map((opt, j) => `
+                <div>
+                  <input type="radio" id="cr-${i}-${j}" name="correct-${i}" ${q.correctAnswer === j ? "checked" : ""} data-action="correct" data-index="${i}" data-value="${j}">
+                  <label for="cr-${i}-${j}"><span class="dot ${dots[j]}"></span>${opt}</label>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+          <div style="margin-top:14px">
+            <label>Time Limit (seconds)</label>
+            <div class="time-select">
+              ${times.map((t) => `<button class="time-btn ${(q.timeLimit || 20) === t ? "active" : ""}" data-action="time" data-index="${i}" data-time="${t}">${t}s</button>`).join("")}
+            </div>
+          </div>
+          <div style="margin-top:14px">
+            <label>Media (optional)</label>
+            <div style="margin-top:8px">
+              ${q.mediaUrl ? (
+                q.mediaType === "video"
+                  ? `<video src="${q.mediaUrl}" controls style="max-height:140px;border-radius:8px;display:block;margin-bottom:8px"></video>`
+                  : q.mediaType === "audio"
+                    ? `<audio src="${q.mediaUrl}" controls style="display:block;margin-bottom:8px"></audio>`
+                    : `<img src="${q.mediaUrl}" style="max-height:140px;border-radius:8px;display:block;margin-bottom:8px">`
+              ) : ""}
+              <div style="display:flex;gap:8px;align-items:center">
+                <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0">
+                  📎 ${q.mediaUrl ? "Replace" : "Upload image / video / audio"}
+                  <input type="file" accept="image/*,video/mp4,video/webm,audio/*" style="display:none" data-action="upload-media" data-index="${i}">
+                </label>
+                ${q.mediaUrl ? `<button class="btn btn-ghost btn-sm" data-action="remove-media" data-index="${i}">Remove</button>` : ""}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderQuestions() {
+      els.qCount.textContent = String(state.questions.length);
+      if (!state.questions.length) {
+        els.questionsContainer.innerHTML = "";
+        els.noQuestions.classList.remove("hidden");
+        return;
+      }
+      els.noQuestions.classList.add("hidden");
+      els.questionsContainer.innerHTML = state.questions.map(questionTemplate).join("");
+    }
+
+    async function loadQuizzes() {
+      const res = await apiFetch("/api/quizzes");
+      state.quizzes = await res.json();
+      renderQuizList();
+    }
 
     function newQuiz() {
-      currentQuizId = null;
-      questions = [];
-      document.getElementById('editor-title').textContent = 'New Quiz';
-      document.getElementById('quiz-title').value = '';
-      document.getElementById('delete-btn').style.display = 'none';
-      document.getElementById('host-panel').style.display = 'none';
-      document.querySelectorAll('.quiz-item').forEach(el => { el.style.borderColor = ''; el.style.background = ''; });
+      state.currentQuizId = null;
+      state.questions = [];
+      els.editorTitle.textContent = "New Quiz";
+      els.quizTitle.value = "";
+      els.deleteBtn.style.display = "none";
+      els.hostPanel.style.display = "none";
       showEditor();
       renderQuestions();
       addQuestion();
-      document.getElementById('quiz-title').focus();
+      setSelectedStyle();
     }
 
-    function showEditor() {
-      document.getElementById('editor-section').classList.add('visible');
-      document.getElementById('no-editor').style.display = 'none';
+    function selectQuiz(id) {
+      const quiz = state.quizzes.find((q) => q.id === id);
+      if (!quiz) return;
+      state.currentQuizId = id;
+      state.questions = JSON.parse(JSON.stringify(quiz.questions || []));
+      els.editorTitle.textContent = "Edit Quiz";
+      els.quizTitle.value = quiz.title || "";
+      els.deleteBtn.style.display = "";
+      els.hostPanel.style.display = "";
+      showEditor();
+      renderQuestions();
+      setSelectedStyle();
     }
-
-    // ── Render questions ──────────────────────────────────────────────────────
-
-    function renderQuestions() {
-      const container = document.getElementById('questions-container');
-      const noQ = document.getElementById('no-questions');
-      document.getElementById('q-count').textContent = questions.length;
-
-      if (questions.length === 0) {
-        container.innerHTML = '';
-        noQ.classList.remove('hidden');
-        return;
-      }
-      noQ.classList.add('hidden');
-
-      container.innerHTML = questions.map((q, i) => renderQuestionBlock(q, i)).join('');
-    }
-
-    function renderQuestionBlock(q, i) {
-      const opts = ['A', 'B', 'C', 'D'];
-      const colors = ['a', 'b', 'c', 'd'];
-      const times = [10, 20, 30, 60];
-
-      return `
-      <div class="question-block fade-in" id="qblock-${i}">
-        <div class="q-header">
-          <span class="q-number">Question ${i + 1}</span>
-          <button class="btn btn-ghost btn-sm" onclick="removeQuestion(${i})" title="Remove">✕ Remove</button>
-        </div>
-        <div class="field">
-          <label>Question Text</label>
-          <div style="display:flex;gap:6px;margin-bottom:6px">
-            <button class="btn btn-sm ${(q.dir||'rtl')==='rtl' ? 'btn-primary' : 'btn-outline'}"
-              onclick="setDir(${i},'rtl',this)">Hebrew ←</button>
-            <button class="btn btn-sm ${(q.dir||'rtl')==='ltr' ? 'btn-primary' : 'btn-outline'}"
-              onclick="setDir(${i},'ltr',this)">→ English</button>
-          </div>
-          <textarea class="textarea" rows="2" placeholder="Enter your question..." dir="${q.dir||'rtl'}"
-            onchange="updateQ(${i}, 'question', this.value)">${esc(q.question || '')}</textarea>
-        </div>
-        <div class="options-grid">
-          ${opts.map((opt, j) => `
-            <div class="option-input-wrap">
-              <span class="opt-dot ${colors[j]}"></span>
-              <input class="input" type="text" placeholder="Option ${opt}" dir="${q.dir||'rtl'}"
-                value="${esc((q.options || [])[j] || '')}"
-                onchange="updateOption(${i}, ${j}, this.value)">
-            </div>
-          `).join('')}
-        </div>
-        <div style="margin-top:14px">
-          <label>Correct Answer</label>
-          <div class="correct-radio">
-            ${opts.map((opt, j) => `
-              <div>
-                <input type="radio" name="correct-${i}" id="cr-${i}-${j}" value="${j}"
-                  ${(q.correctAnswer === j) ? 'checked' : ''}
-                  onchange="updateQ(${i}, 'correctAnswer', ${j})">
-                <label for="cr-${i}-${j}"><span class="dot ${colors[j]}"></span>${opt}</label>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <div style="margin-top:14px">
-          <label>Time Limit (seconds)</label>
-          <div class="time-select">
-            ${times.map(t => `
-              <button class="time-btn ${(q.timeLimit || 20) === t ? 'active' : ''}"
-                onclick="setTime(${i}, ${t}, this)">${t}s</button>
-            `).join('')}
-          </div>
-        </div>
-        <div style="margin-top:14px">
-          <label>Media (optional)</label>
-          <div id="media-wrap-${i}" style="margin-top:8px">
-            ${q.mediaUrl
-              ? (q.mediaType === 'video'
-                ? `<video src="${q.mediaUrl}" controls style="max-height:140px;border-radius:8px;display:block;margin-bottom:8px"></video>`
-                : q.mediaType === 'audio'
-                ? `<audio src="${q.mediaUrl}" controls style="display:block;margin-bottom:8px"></audio>`
-                : `<img src="${q.mediaUrl}" style="max-height:140px;border-radius:8px;display:block;margin-bottom:8px">`)
-              : ''}
-            <div style="display:flex;gap:8px;align-items:center">
-              <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0">
-                📎 ${q.mediaUrl ? 'Replace' : 'Upload image / video / audio'}
-                <input type="file" accept="image/*,video/mp4,video/webm,audio/*" style="display:none"
-                  onchange="uploadMedia(${i}, this)">
-              </label>
-              ${q.mediaUrl ? `<button class="btn btn-ghost btn-sm" onclick="removeMedia(${i})">Remove</button>` : ''}
-              <span id="upload-status-${i}" style="font-size:0.8rem;color:var(--text-muted)"></span>
-            </div>
-          </div>
-        </div>
-      </div>`;
-    }
-
-    // ── Question mutations ────────────────────────────────────────────────────
 
     function addQuestion() {
-      questions.push({
-        question: '',
-        options: ['', '', '', ''],
-        correctAnswer: 0,
-        timeLimit: 20,
+      state.questions.push({ question: "", options: ["", "", "", ""], correctAnswer: 0, timeLimit: 20, dir: "rtl" });
+      renderQuestions();
+    }
+
+    function syncQuestionsFromDom() {
+      document.querySelectorAll(".question-block").forEach((block, i) => {
+        const q = state.questions[i];
+        if (!q) return;
+        const t = block.querySelector(".q-textarea");
+        if (t) q.question = t.value;
+        block.querySelectorAll(".q-option").forEach((input, j) => { q.options[j] = input.value; });
       });
-      renderQuestions();
-      // Scroll to new question
-      setTimeout(() => {
-        const blocks = document.querySelectorAll('.question-block');
-        blocks[blocks.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 50);
     }
-
-    function removeQuestion(i) {
-      questions.splice(i, 1);
-      renderQuestions();
-    }
-
-    function updateQ(i, field, value) {
-      questions[i][field] = value;
-    }
-
-    function updateOption(i, j, value) {
-      if (!questions[i].options) questions[i].options = ['', '', '', ''];
-      questions[i].options[j] = value;
-    }
-
-    function setTime(i, t, btn) {
-      questions[i].timeLimit = t;
-      const wrap = btn.closest('.time-select');
-      wrap.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-
-    async function uploadMedia(i, input) {
-      const file = input.files[0];
-      if (!file) return;
-      const status = document.getElementById(`upload-status-${i}`);
-      if (status) status.textContent = 'Uploading...';
-      const fd = new FormData();
-      fd.append('file', file);
-      try {
-        const res = await fetch('/api/upload', { method: 'POST', body: fd });
-        const data = await res.json();
-        questions[i].mediaUrl = data.url;
-        questions[i].mediaType = data.mediaType;
-        renderQuestions();
-      } catch {
-        if (status) status.textContent = 'Upload failed';
-      }
-    }
-
-    function removeMedia(i) {
-      questions[i].mediaUrl = null;
-      questions[i].mediaType = null;
-      renderQuestions();
-    }
-
-    function setDir(i, dir, btn) {
-      questions[i].dir = dir;
-      renderQuestions();
-    }
-
-    // ── Save ──────────────────────────────────────────────────────────────────
 
     async function saveQuiz() {
-      const title = document.getElementById('quiz-title').value.trim();
-      if (!title) return toast('Enter a quiz title', 'err');
-      if (questions.length === 0) return toast('Add at least one question', 'err');
-
-      // Gather latest values from DOM (textarea/input may not have fired change)
-      document.querySelectorAll('.question-block').forEach((block, i) => {
-        const ta = block.querySelector('textarea');
-        if (ta) questions[i].question = ta.value;
-        block.querySelectorAll('.option-input-wrap input').forEach((inp, j) => {
-          if (!questions[i].options) questions[i].options = ['','','',''];
-          questions[i].options[j] = inp.value;
-        });
-      });
-
-      const payload = { title, questions };
-
+      syncQuestionsFromDom();
+      const title = els.quizTitle.value.trim();
+      if (!title) return toast("Enter a quiz title", "err");
+      if (!state.questions.length) return toast("Add at least one question", "err");
+      const payload = { title, questions: state.questions };
       try {
-        if (currentQuizId) {
-          const res = await fetch(`/api/quizzes/${currentQuizId}`, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-          });
+        if (state.currentQuizId) {
+          const res = await apiFetch(`/api/quizzes/${state.currentQuizId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
           const updated = await res.json();
-          const idx = quizzes.findIndex(q => q.id === currentQuizId);
-          if (idx !== -1) quizzes[idx] = updated;
-          toast('Saved!', 'ok');
+          const idx = state.quizzes.findIndex((q) => q.id === state.currentQuizId);
+          if (idx !== -1) state.quizzes[idx] = updated;
+          toast("Saved!", "ok");
         } else {
-          const res = await fetch('/api/quizzes', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-          });
+          const res = await apiFetch("/api/quizzes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
           const created = await res.json();
-          quizzes.push(created);
-          currentQuizId = created.id;
-          document.getElementById('editor-title').textContent = 'Edit Quiz';
-          document.getElementById('delete-btn').style.display = '';
-          document.getElementById('host-panel').style.display = '';
-          toast('Quiz created!', 'ok');
+          state.quizzes.push(created);
+          state.currentQuizId = created.id;
+          els.editorTitle.textContent = "Edit Quiz";
+          els.deleteBtn.style.display = "";
+          els.hostPanel.style.display = "";
+          toast("Quiz created!", "ok");
         }
         renderQuizList();
-        // Re-highlight
-        setTimeout(() => selectQuizHighlight(currentQuizId), 50);
       } catch (e) {
-        toast('Save failed', 'err');
+        toast("Save failed", "err");
       }
-    }
-
-    function selectQuizHighlight(id) {
-      document.querySelectorAll('.quiz-item').forEach(el => {
-        el.style.borderColor = el.dataset.id === id ? 'var(--primary)' : 'var(--border)';
-        el.style.background = el.dataset.id === id ? 'var(--surface2)' : '';
-      });
     }
 
     async function deleteQuiz() {
-      if (!currentQuizId) return;
-      if (!confirm('Delete this quiz?')) return;
-      await fetch(`/api/quizzes/${currentQuizId}`, { method: 'DELETE' });
-      quizzes = quizzes.filter(q => q.id !== currentQuizId);
-      currentQuizId = null;
+      if (!state.currentQuizId) return;
+      if (!confirm("Delete this quiz?")) return;
+      await apiFetch(`/api/quizzes/${state.currentQuizId}`, { method: "DELETE" });
+      state.quizzes = state.quizzes.filter((q) => q.id !== state.currentQuizId);
+      state.currentQuizId = null;
+      els.editorSection.classList.remove("visible");
+      els.noEditor.style.display = "";
       renderQuizList();
-      document.getElementById('editor-section').classList.remove('visible');
-      document.getElementById('no-editor').style.display = '';
-      toast('Deleted', 'ok');
+      toast("Deleted", "ok");
     }
-
-    // ── Host ──────────────────────────────────────────────────────────────────
 
     function hostGame() {
-      if (!currentQuizId) return;
-      location.href = `/host.html?quizId=${currentQuizId}`;
+      if (!state.currentQuizId) return;
+      location.href = `/host.html?quizId=${state.currentQuizId}`;
     }
 
-    // ── Util ──────────────────────────────────────────────────────────────────
+    document.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-action]");
+      if (!target) return;
+      const action = target.dataset.action;
+      const i = Number(target.dataset.index);
+      if (action === "remove-question") { state.questions.splice(i, 1); renderQuestions(); }
+      if (action === "set-dir") { state.questions[i].dir = target.dataset.dir; renderQuestions(); }
+      if (action === "time") { e.preventDefault(); state.questions[i].timeLimit = Number(target.dataset.time); renderQuestions(); }
+      if (action === "remove-media") { state.questions[i].mediaUrl = null; state.questions[i].mediaType = null; renderQuestions(); }
+    });
 
-    function esc(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    document.addEventListener("change", async (e) => {
+      const target = e.target;
+      if (target.matches("[data-action='correct']")) {
+        state.questions[Number(target.dataset.index)].correctAnswer = Number(target.dataset.value);
+      }
+      if (target.matches("input[data-action='upload-media']")) {
+        const i = Number(target.dataset.index);
+        const file = target.files && target.files[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.append("file", file);
+        try {
+          const res = await apiFetch("/api/upload", { method: "POST", body: fd });
+          const data = await res.json();
+          state.questions[i].mediaUrl = data.url;
+          state.questions[i].mediaType = data.mediaType;
+          renderQuestions();
+        } catch {
+          toast("Upload failed", "err");
+        }
+      }
+    });
+
+    document.getElementById("new-btn").addEventListener("click", newQuiz);
+    document.getElementById("add-q-btn").addEventListener("click", addQuestion);
+    document.getElementById("add-q-empty").addEventListener("click", addQuestion);
+    document.getElementById("save-btn").addEventListener("click", saveQuiz);
+    els.deleteBtn.addEventListener("click", deleteQuiz);
+    document.getElementById("host-btn").addEventListener("click", hostGame);
+    els.authBtn.addEventListener("click", checkAuth);
+    els.authInput.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAuth(); });
+
+    async function initAuth() {
+      const token = getAdminToken();
+      if (!token) {
+        els.authOverlay.classList.remove("hidden");
+        setTimeout(() => els.authInput.focus(), 0);
+        return;
+      }
+      try {
+        const res = await apiFetch("/api/admin/verify");
+        if (!res.ok) throw new Error("invalid");
+        els.authOverlay.classList.add("hidden");
+        await loadQuizzes();
+      } catch {
+        clearAdminToken();
+        els.authOverlay.classList.remove("hidden");
+        setTimeout(() => els.authInput.focus(), 0);
+      }
     }
 
-    function toast(msg, type = '') {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast show' + (type === 'err' ? ' toast-err' : type === 'ok' ? ' toast-ok' : '');
-      clearTimeout(el._t);
-      el._t = setTimeout(() => el.classList.remove('show'), 2500);
-    }
-
-    loadQuizzes();
+    els.hostPanel.style.display = "none";
+    initAuth();
   </script>
 </body>
 </html>
