@@ -94,6 +94,7 @@
       code: "",
       myScore: 0,
       answered: false,
+      selectedAnswerIndex: -1,
       timeLeft: 0,
       timer: null,
       socket: null
@@ -186,6 +187,7 @@
       });
       state.socket.on("question", (q) => {
         state.answered = false;
+        state.selectedAnswerIndex = -1;
         renderQuestion(q);
         showScreen("question");
         startTimer(q.timeLimit);
@@ -197,8 +199,7 @@
       });
       state.socket.on("question-ended", ({ correctAnswer, leaderboard }) => {
         clearInterval(state.timer);
-        const selected = document.querySelector(".selected-opt");
-        const selectedIdx = selected ? Number(selected.id.replace("popt-", "")) : -1;
+        const selectedIdx = state.selectedAnswerIndex;
         const fb = document.getElementById("feedback-banner");
         if (selectedIdx === -1) { fb.className = "result-banner wrong fade-in"; fb.innerHTML = "<div style='font-size:2.5rem'>⏱️</div><div>Time's up!</div>"; }
         else if (selectedIdx === correctAnswer) { fb.className = "result-banner correct fade-in"; fb.innerHTML = "<div style='font-size:2.5rem'>✓</div><div>Correct!</div>"; }
@@ -234,14 +235,12 @@
       const btn = e.target.closest(".option-btn");
       if (!btn || state.answered || !state.socket) return;
       state.answered = true;
-      const index = Number(btn.dataset.answerIndex);
-      document.querySelectorAll(".option-btn").forEach((b, i) => {
+      state.selectedAnswerIndex = Number(btn.dataset.answerIndex);
+      document.querySelectorAll(".option-btn").forEach((b) => {
         b.disabled = true;
-        b.style.opacity = i === index ? "1" : "0.4";
-        if (i === index) b.classList.add("selected-opt");
       });
-      state.socket.emit("submit-answer", { code: state.code, answerIndex: index, timeLeft: Math.max(0, state.timeLeft) });
-      setTimeout(() => showScreen("answered"), 600);
+      state.socket.emit("submit-answer", { code: state.code, answerIndex: state.selectedAnswerIndex, timeLeft: Math.max(0, state.timeLeft) });
+      showScreen("answered");
     });
 
     const params = new URLSearchParams(location.search);
