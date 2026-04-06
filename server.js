@@ -316,7 +316,12 @@ io.on('connection', (socket) => {
 
     const q = game.quiz.questions[qIdx];
     const isCorrect = answerIndex === q.correctAnswer;
-    const speedBonus = isCorrect ? Math.round(Math.max(0, timeLeft) * 50) : 0;
+    const maxT = q.timeLimit || 20;
+    let t = Math.max(0, Number(timeLeft));
+    if (!Number.isFinite(t)) t = 0;
+    t = Math.min(t, maxT);
+    // 50 pts per full second + 5 pts per tenth of a second remaining (same as floor(t*10)*5)
+    const speedBonus = isCorrect ? Math.floor(t * 10) * 5 : 0;
     const points = isCorrect ? (500 + speedBonus) : 0;
 
     game.answers[qIdx][socket.id] = { answerIndex, isCorrect, points };
