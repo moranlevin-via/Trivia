@@ -251,7 +251,12 @@
           <div style="margin-top:14px">
             <label>Time Limit (seconds)</label>
             <div class="time-select">
-              ${times.map((t) => `<button class="time-btn ${(q.timeLimit || 20) === t ? "active" : ""}" data-action="time" data-index="${i}" data-time="${t}">${t}s</button>`).join("")}
+              ${times.map((t) => `<button type="button" class="time-btn ${(q.timeLimit || 20) === t ? "active" : ""}" data-action="time" data-index="${i}" data-time="${t}">${t}s</button>`).join("")}
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+              <span class="text-muted" style="font-size:0.85rem">Custom:</span>
+              <input type="number" class="input q-time-custom" min="3" max="300" step="1" style="max-width:110px" data-action="time-custom" data-index="${i}" value="${Number.isFinite(q.timeLimit) ? q.timeLimit : 20}">
+              <span class="text-muted" style="font-size:0.8rem">3–300 sec</span>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -278,6 +283,7 @@
     }
 
     function renderQuestions() {
+      syncBeforeRenderIfDomMatchesState();
       els.qCount.textContent = String(state.questions.length);
       if (!state.questions.length) {
         els.questionsContainer.innerHTML = "";
@@ -322,6 +328,7 @@
     }
 
     function addQuestion() {
+      syncQuestionsFromDom();
       state.questions.push({ question: "", options: ["", "", "", ""], correctAnswer: 0, timeLimit: 20, dir: "rtl" });
       renderQuestions();
     }
@@ -334,6 +341,12 @@
         if (t) q.question = t.value;
         block.querySelectorAll(".q-option").forEach((input, j) => { q.options[j] = input.value; });
       });
+    }
+
+    /** Call before any re-render so textarea/options are not lost when innerHTML is replaced. */
+    function syncBeforeRenderIfDomMatchesState() {
+      const n = document.querySelectorAll(".question-block").length;
+      if (n === state.questions.length) syncQuestionsFromDom();
     }
 
     async function saveQuiz() {
@@ -387,7 +400,7 @@
       if (!target) return;
       const action = target.dataset.action;
       const i = Number(target.dataset.index);
-      if (action === "remove-question") { state.questions.splice(i, 1); renderQuestions(); }
+      if (action === "remove-question") { syncQuestionsFromDom(); state.questions.splice(i, 1); renderQuestions(); }
       if (action === "set-dir") { state.questions[i].dir = target.dataset.dir; renderQuestions(); }
       if (action === "time") { e.preventDefault(); state.questions[i].timeLimit = Number(target.dataset.time); renderQuestions(); }
       if (action === "remove-media") { state.questions[i].mediaUrl = null; state.questions[i].mediaType = null; renderQuestions(); }
@@ -395,6 +408,16 @@
 
     document.addEventListener("change", async (e) => {
       const target = e.target;
+      if (target.matches("[data-action='time-custom']")) {
+        const i = Number(target.dataset.index);
+        let v = parseInt(target.value, 10);
+        if (!Number.isFinite(v)) return;
+        v = Math.min(300, Math.max(3, v));
+        state.questions[i].timeLimit = v;
+        target.value = String(v);
+        renderQuestions();
+        return;
+      }
       if (target.matches("[data-action='correct']")) {
         state.questions[Number(target.dataset.index)].correctAnswer = Number(target.dataset.value);
       }
