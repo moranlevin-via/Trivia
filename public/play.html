@@ -90,6 +90,8 @@
     const OPT_CLASSES = ["opt-a", "opt-b", "opt-c", "opt-d"];
     const OPT_ICONS = ["▲", "◆", "●", "■"];
 
+    const OPT_LABELS = ["A", "B", "C", "D"];
+
     const state = {
       name: "",
       code: "",
@@ -99,8 +101,18 @@
       timeLeft: 0,
       questionDeadlineMs: 0,
       timer: null,
-      socket: null
+      socket: null,
+      lastQuestion: null,
     };
+
+    function correctAnswerLineHtml(correctAnswer) {
+      const q = state.lastQuestion;
+      const opts = (q && q.options) ? q.options : [];
+      const label = OPT_LABELS[correctAnswer] || "?";
+      const text = opts[correctAnswer] != null ? esc(String(opts[correctAnswer])) : "";
+      const dir = (q && q.dir) || "rtl";
+      return `<p dir="${dir}" style="font-size:1.05rem;margin-top:16px;font-weight:600;line-height:1.45;color:var(--text);max-width:100%">התשובה הנכונה: <strong>${label}</strong> — ${text}</p>`;
+    }
 
     function secondsRemaining() {
       return Math.max(0, (state.questionDeadlineMs - Date.now()) / 1000);
@@ -211,6 +223,7 @@
       state.socket.on("question", (q) => {
         state.answered = false;
         state.selectedAnswerIndex = -1;
+        state.lastQuestion = q;
         renderQuestion(q);
         showScreen("question");
         startTimer(q.timeLimit);
@@ -224,15 +237,31 @@
         clearInterval(state.timer);
         const selectedIdx = state.selectedAnswerIndex;
         const fb = document.getElementById("feedback-banner");
-        if (selectedIdx === -1) { fb.className = "result-banner wrong fade-in"; fb.innerHTML = "<div style='font-size:2.5rem'>⏱️</div><div>Time's up!</div>"; }
-        else if (selectedIdx === correctAnswer) { fb.className = "result-banner correct fade-in"; fb.innerHTML = "<div style='font-size:2.5rem'>✓</div><div>Correct!</div>"; }
-        else { fb.className = "result-banner wrong fade-in"; fb.innerHTML = "<div style='font-size:2.5rem'>✕</div><div>Wrong!</div>"; }
+        const wrongOrTimeout = selectedIdx === -1 || selectedIdx !== correctAnswer;
+        const extraWrong = wrongOrTimeout ? correctAnswerLineHtml(correctAnswer) : "";
+        if (selectedIdx === -1) {
+          fb.className = "result-banner wrong fade-in";
+          fb.innerHTML = "<div style='font-size:2.5rem'>⏱️</div><div>Time's up!</div>" + extraWrong;
+        } else if (selectedIdx === correctAnswer) {
+          fb.className = "result-banner correct fade-in";
+          fb.innerHTML = "<div style='font-size:2.5rem'>✓</div><div>Correct!</div>";
+        } else {
+          fb.className = "result-banner wrong fade-in";
+          fb.innerHTML = "<div style='font-size:2.5rem'>✕</div><div>Wrong!</div>" + extraWrong;
+        }
         showScreen("feedback");
         setTimeout(() => {
           const banner = document.getElementById("result-banner");
-          if (selectedIdx === -1) { banner.className = "result-banner wrong fade-in"; banner.innerHTML = "<div style='font-size:2rem'>⏱️</div><div>Time's up!</div>"; }
-          else if (selectedIdx === correctAnswer) { banner.className = "result-banner correct fade-in"; banner.innerHTML = "<div style='font-size:2rem'>✓</div><div>Correct!</div>"; }
-          else { banner.className = "result-banner wrong fade-in"; banner.innerHTML = "<div style='font-size:2rem'>✕</div><div>Wrong!</div>"; }
+          if (selectedIdx === -1) {
+            banner.className = "result-banner wrong fade-in";
+            banner.innerHTML = "<div style='font-size:2rem'>⏱️</div><div>Time's up!</div>" + extraWrong;
+          } else if (selectedIdx === correctAnswer) {
+            banner.className = "result-banner correct fade-in";
+            banner.innerHTML = "<div style='font-size:2rem'>✓</div><div>Correct!</div>";
+          } else {
+            banner.className = "result-banner wrong fade-in";
+            banner.innerHTML = "<div style='font-size:2rem'>✕</div><div>Wrong!</div>" + extraWrong;
+          }
           document.getElementById("result-score").textContent = `${state.myScore.toLocaleString()} pts`;
           renderLeaderboard("result-lb", leaderboard);
           showScreen("results");
