@@ -188,6 +188,7 @@ function sendQuestion(code) {
     timeLimit: q.timeLimit || 20,
     mediaUrl: q.mediaUrl || null,
     mediaType: q.mediaType || null,
+    dir: q.dir || 'rtl',
   };
 
   io.to(code).emit('question', payload);

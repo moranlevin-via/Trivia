@@ -50,6 +50,7 @@
           <span id="p-q-meta" class="text-muted" style="font-size:0.85rem"></span>
           <span id="p-timer-num" class="text-accent" style="font-size:1.5rem;font-weight:900">--</span>
         </div>
+        <div id="p-q-media" style="margin:12px 0"></div>
         <div id="p-q-text" class="q-display"></div>
       </div>
       <div id="p-options" class="answer-grid"></div>
@@ -142,6 +143,19 @@
 
     function renderQuestion(q) {
       document.getElementById("p-q-meta").textContent = `Question ${q.index + 1} / ${q.total}`;
+      const mediaEl = document.getElementById("p-q-media");
+      if (q.mediaUrl) {
+        const u = String(q.mediaUrl).replace(/"/g, "&quot;");
+        if (q.mediaType === "video") {
+          mediaEl.innerHTML = `<video src="${u}" autoplay muted playsinline controls style="max-height:220px;border-radius:10px;max-width:100%"></video>`;
+        } else if (q.mediaType === "audio") {
+          mediaEl.innerHTML = `<audio src="${u}" autoplay controls style="width:100%;margin:8px 0"></audio>`;
+        } else {
+          mediaEl.innerHTML = `<img src="${u}" alt="" style="max-height:220px;border-radius:10px;max-width:100%;object-fit:contain">`;
+        }
+      } else {
+        mediaEl.innerHTML = "";
+      }
       const qText = document.getElementById("p-q-text");
       qText.textContent = q.question;
       qText.dir = q.dir || "rtl";
